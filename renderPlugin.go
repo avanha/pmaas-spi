@@ -2,7 +2,7 @@ package spi
 
 import "net/http"
 
-type IPMAASContainer interface {
-	AddRoute(path string, handlerFunc http.HandlerFunc)
+type IPMAASRenderPlugin interface {
+	IPMAASPlugin
 	RenderList(w http.ResponseWriter, r *http.Request, items []interface{})
 }
