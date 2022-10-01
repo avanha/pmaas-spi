@@ -10,4 +10,6 @@ type IPMAASContainer interface {
 	RenderList(w http.ResponseWriter, r *http.Request, items []interface{})
 	GetTemplate(templateInfo *TemplateInfo) (ITemplate, error)
 	GetEntityRenderer(entityType reflect.Type) EntityRenderFunc
+	RegisterEntityRenderer(entityType reflect.Type, renderFunc EntityRenderFunc)
+	RegisterStreamingEntityRenderer(entityType reflect.Type, renderFunc StreamingEntityRenderFunc)
 }
