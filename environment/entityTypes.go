@@ -27,3 +27,7 @@ type WirelessThermometer struct {
 	BatteryData BatteryData
 	SensorData SensorData
 }
+
+type IWirelessThermometer interface {
+	GetWirelessThermometerData() WirelessThermometer
+}
