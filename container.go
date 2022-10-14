@@ -9,7 +9,7 @@ type IPMAASContainer interface {
 	AddRoute(path string, handlerFunc http.HandlerFunc)
 	RenderList(w http.ResponseWriter, r *http.Request, items []interface{})
 	GetTemplate(templateInfo *TemplateInfo) (ITemplate, error)
-	GetEntityRenderer(entityType reflect.Type) EntityRenderFunc
+	GetEntityRenderer(entityType reflect.Type) (EntityRenderFunc, error)
 	RegisterEntityRenderer(entityType reflect.Type, renderFactory EntityRendererFactory)
 	RegisterStreamingEntityRenderer(entityType reflect.Type, streamingRenderFactory StreamingEntityRendererFactory)
 }
