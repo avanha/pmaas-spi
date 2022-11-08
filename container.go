@@ -16,4 +16,5 @@ type IPMAASContainer interface {
 	GetEntityRenderer(entityType reflect.Type) (EntityRenderFunc, error)
 	RegisterEntityRenderer(entityType reflect.Type, renderFactory EntityRendererFactory)
 	RegisterStreamingEntityRenderer(entityType reflect.Type, streamingRenderFactory StreamingEntityRendererFactory)
+	EnableStaticContent(staticContentDir string)
 }
