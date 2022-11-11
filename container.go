@@ -12,9 +12,8 @@ type RenderListOptions struct {
 type IPMAASContainer interface {
 	AddRoute(path string, handlerFunc http.HandlerFunc)
 	RenderList(w http.ResponseWriter, r *http.Request, options RenderListOptions, items []interface{})
-	GetTemplate(templateInfo *TemplateInfo) (ITemplate, error)
-	GetEntityRenderer(entityType reflect.Type) (EntityRenderFunc, error)
+	GetTemplate(templateInfo *TemplateInfo) (CompiledTemplate, error)
+	GetEntityRenderer(entityType reflect.Type) (EntityRenderer, error)
 	RegisterEntityRenderer(entityType reflect.Type, renderFactory EntityRendererFactory)
-	RegisterStreamingEntityRenderer(entityType reflect.Type, streamingRenderFactory StreamingEntityRendererFactory)
 	EnableStaticContent(staticContentDir string)
 }
