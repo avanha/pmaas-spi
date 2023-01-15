@@ -16,4 +16,12 @@ type IPMAASContainer interface {
 	GetEntityRenderer(entityType reflect.Type) (EntityRenderer, error)
 	RegisterEntityRenderer(entityType reflect.Type, renderFactory EntityRendererFactory)
 	EnableStaticContent(staticContentDir string)
+
+	// RegisterEntity Registers an entity with server.  This gives it a unique name, which can later be looked up for
+	// further interaction with the entity.
+	RegisterEntity(uniqueData string, entityType reflect.Type) (string, error)
+
+	// DeregisterEntity Removes an entity previously registered with the server.  Pass the id returned from the
+	// previous call to RegisterEntity.
+	DeregisterEntity(id string) error
 }
