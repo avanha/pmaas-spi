@@ -2,6 +2,7 @@ package spi
 
 import (
 	"net/http"
+	"pmaas.io/spi/events"
 	"reflect"
 )
 
@@ -24,4 +25,7 @@ type IPMAASContainer interface {
 	// DeregisterEntity Removes an entity previously registered with the server.  Pass the id returned from the
 	// previous call to RegisterEntity.
 	DeregisterEntity(id string) error
+
+	// RegisterEventReceiver Registers a receiver for events
+	RegisterEventReceiver(predicate events.EventPredicate, receiver events.EventReceiver) (int, error)
 }
