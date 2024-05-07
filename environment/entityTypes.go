@@ -1,4 +1,4 @@
-package environemnt
+package environment
 
 import (
 	"time"
