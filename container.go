@@ -10,6 +10,7 @@ type RenderListOptions struct {
 	Title string
 }
 
+// IPMAASContainer is an interface for plugins to interact with the PMAAS server.
 type IPMAASContainer interface {
 	AddRoute(path string, handlerFunc http.HandlerFunc)
 	RenderList(w http.ResponseWriter, r *http.Request, options RenderListOptions, items []interface{})
