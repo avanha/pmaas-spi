@@ -27,6 +27,10 @@ type IPMAASContainer interface {
 	// previous call to RegisterEntity.
 	DeregisterEntity(id string) error
 
-	// RegisterEventReceiver Registers a receiver for events
+	// RegisterEventReceiver Registers a receiver for events.  If successful, returns an integer handle that can be used
+	// to deregister the handler in the future.
 	RegisterEventReceiver(predicate events.EventPredicate, receiver events.EventReceiver) (int, error)
+
+	// DeregisterEventReceiver Removes a previously registered event receiver
+	DeregisterEventReceiver(receiverHandle int) error
 }
