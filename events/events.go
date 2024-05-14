@@ -2,9 +2,18 @@ package events
 
 import "reflect"
 
-type EntityRegisteredEvent struct {
+type EntityEvent struct {
 	Id         string
 	EntityType reflect.Type
+}
+
+type EntityRegisteredEvent struct {
+	EntityEvent
+}
+
+type EntityStateChangedEvent struct {
+	EntityEvent
+	NewState any
 }
 
 type EventInfo struct {
