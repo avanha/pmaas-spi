@@ -5,6 +5,7 @@ import "reflect"
 type EntityEvent struct {
 	Id         string
 	EntityType reflect.Type
+	Name       string
 }
 
 type EntityRegisteredEvent struct {
