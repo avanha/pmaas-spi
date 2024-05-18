@@ -22,7 +22,7 @@ type IPMAASContainer interface {
 
 	// RegisterEntity Registers an entity with server.  This gives it a unique name, which can later be looked up for
 	// further interaction with the entity.
-	RegisterEntity(uniqueData string, entityType reflect.Type) (string, error)
+	RegisterEntity(uniqueData string, entityType reflect.Type, name string) (string, error)
 
 	// DeregisterEntity Removes an entity previously registered with the server.  Pass the id returned from the
 	// previous call to RegisterEntity.
