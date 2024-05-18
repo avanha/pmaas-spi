@@ -12,6 +12,12 @@ type EntityRegisteredEvent struct {
 	EntityEvent
 }
 
+type EntityNameChangedEvent struct {
+	EntityEvent
+	NewName string
+	OldName string
+}
+
 type EntityStateChangedEvent struct {
 	EntityEvent
 	NewState any
