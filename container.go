@@ -34,4 +34,11 @@ type IPMAASContainer interface {
 
 	// DeregisterEventReceiver Removes a previously registered event receiver
 	DeregisterEventReceiver(receiverHandle int) error
+
+	// EnqueueOnPluginGoRoutine Enqueues the passed function for execution on the plugin's main GoRoutine.
+	// Returns an error if the function cannot be enqueued.  This method returns as soon as the function
+	// is enqueued, it does not wait for execution.  If you need the results of the execution, you'll need to
+	// orchestrate that in the function.  For example, the function can send the result back via a channel.
+	// Warning: Calling this function when already executing on the plugin's main GoRoutine will result in deadlock.
+	EnqueueOnPluginGoRoutine(f func()) error
 }
