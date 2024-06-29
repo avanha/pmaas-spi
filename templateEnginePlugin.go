@@ -1,18 +1,18 @@
 package spi
 
 import (
-	"embed"
 	"io"
+	"io/fs"
 	"text/template"
 )
 
 type TemplateInfo struct {
-	Name    string
-	FuncMap template.FuncMap
-	Paths   []string
-	Scripts []string
-	Styles  []string
-	EmbedFS *embed.FS
+	Name     string
+	FuncMap  template.FuncMap
+	Paths    []string
+	Scripts  []string
+	Styles   []string
+	SourceFS fs.FS
 }
 
 type ITemplate interface {

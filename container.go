@@ -1,6 +1,7 @@
 package spi
 
 import (
+	"io/fs"
 	"net/http"
 	"pmaas.io/spi/events"
 	"reflect"
@@ -19,6 +20,10 @@ type IPMAASContainer interface {
 	GetEntityRenderer(entityType reflect.Type) (EntityRenderer, error)
 	RegisterEntityRenderer(entityType reflect.Type, renderFactory EntityRendererFactory)
 	EnableStaticContent(staticContentDir string)
+
+	// ProvideContentFS Registers an io/fs.FS instance that the server can use to read plugin resources such as
+	// templates or static file content for serving over HTTP.
+	ProvideContentFS(fs fs.FS)
 
 	// RegisterEntity Registers an entity with server.  This gives it a unique name, which can later be looked up for
 	// further interaction with the entity.
