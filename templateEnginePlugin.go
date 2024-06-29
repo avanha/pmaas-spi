@@ -1,6 +1,7 @@
 package spi
 
 import (
+	"embed"
 	"io"
 	"text/template"
 )
@@ -11,6 +12,7 @@ type TemplateInfo struct {
 	Paths   []string
 	Scripts []string
 	Styles  []string
+	EmbedFS *embed.FS
 }
 
 type ITemplate interface {
