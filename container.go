@@ -23,7 +23,7 @@ type IPMAASContainer interface {
 
 	// ProvideContentFS Registers an io/fs.FS instance that the server can use to read plugin resources such as
 	// templates or static file content for serving over HTTP.
-	ProvideContentFS(fs fs.FS)
+	ProvideContentFS(fs fs.FS, prefix string)
 
 	// RegisterEntity Registers an entity with server.  This gives it a unique name, which can later be looked up for
 	// further interaction with the entity.
