@@ -7,3 +7,8 @@ type IPMAASPlugin interface {
 	Start()
 	Stop()
 }
+
+type IPMAASPlugin2 interface {
+	IPMAASPlugin
+	StopAsync() chan func()
+}
