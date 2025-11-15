@@ -3,8 +3,9 @@ package spi
 import (
 	"io/fs"
 	"net/http"
-	"pmaas.io/spi/events"
 	"reflect"
+
+	"pmaas.io/spi/events"
 )
 
 type RenderListOptions struct {
@@ -27,11 +28,16 @@ type IPMAASContainer interface {
 
 	// RegisterEntity Registers an entity with server.  This gives it a unique name, which can later be looked up for
 	// further interaction with the entity.
-	RegisterEntity(uniqueData string, entityType reflect.Type, name string) (string, error)
+	RegisterEntity(uniqueData string, entityType reflect.Type, name string,
+		invocationHandler EntityInvocationHandler) (string, error)
 
 	// DeregisterEntity Removes an entity previously registered with the server.  Pass the id returned from the
 	// previous call to RegisterEntity.
 	DeregisterEntity(id string) error
+
+	// InvokeOnEntity Invokes the supplied function on the plugin-runner go-routine that owns the specified entity,
+	// supplying the entity.
+	InvokeOnEntity(id string, function func(entity any)) error
 
 	// RegisterEventReceiver Registers a receiver for events.  If successful, returns an integer handle that can be used
 	// to deregister the handler in the future.
