@@ -29,11 +29,14 @@ type IPMAASContainer interface {
 	// RegisterEntity Registers an entity with server.  This gives it a unique name, which can later be looked up for
 	// further interaction with the entity.
 	RegisterEntity(uniqueData string, entityType reflect.Type, name string,
-		invocationHandler EntityInvocationHandler) (string, error)
+		invocationHandlerFunc EntityInvocationHandlerFunc) (string, error)
 
 	// DeregisterEntity Removes an entity previously registered with the server.  Pass the id returned from the
 	// previous call to RegisterEntity.
 	DeregisterEntity(id string) error
+
+	// AssertEntityType Verifies that an entity with the given ID exists and is of the correct type
+	AssertEntityType(pmaasEntityId string, entityType reflect.Type) error
 
 	// InvokeOnEntity Invokes the supplied function on the plugin-runner go-routine that owns the specified entity,
 	// supplying the entity.

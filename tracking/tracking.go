@@ -22,40 +22,49 @@ type Trackable interface {
 
 var TrackableType = reflect.TypeOf((*Trackable)(nil)).Elem()
 
-func NewTrackableStub(entityId string, container spi.IPMAASContainer) *TrackableStub {
-	return &TrackableStub{
-		entityId:  entityId,
-		container: container,
+func NewTrackableStub(container spi.IPMAASContainer, pmaasId string) Trackable {
+	invoker := func(f func(trackable Trackable)) error {
+		return container.InvokeOnEntity(pmaasId, func(entity any) {
+			f(entity.(Trackable))
+		})
+	}
+	return &trackableStub{
+		pmaasEntityId: pmaasId,
+		invokeFn:      invoker,
 	}
 }
 
-type TrackableStub struct {
-	entityId  string
-	container spi.IPMAASContainer
+type trackableStub struct {
+	pmaasEntityId string
+	invokeFn      func(func(trackable Trackable)) error
 }
 
-func (t *TrackableStub) TrackingConfig() TrackingConfig {
-	var trackingConfig TrackingConfig
-	err := t.container.InvokeOnEntity(t.entityId, func(entity any) {
-		trackingConfig = entity.(Trackable).TrackingConfig()
+func (t *trackableStub) TrackingConfig() TrackingConfig {
+	resultCh := make(chan TrackingConfig)
+	err := t.invokeFn(func(instance Trackable) {
+		defer func() { close(resultCh) }()
+		resultCh <- instance.TrackingConfig()
 	})
 
 	if err != nil {
+		close(resultCh)
 		panic(err)
 	}
 
-	return trackingConfig
+	return <-resultCh
 }
 
-func (t *TrackableStub) Data() any {
-	var data any
-	err := t.container.InvokeOnEntity(t.entityId, func(entity any) {
-		data = entity.(Trackable).Data()
+func (t *trackableStub) Data() any {
+	resultCh := make(chan any)
+	err := t.invokeFn(func(instance Trackable) {
+		defer func() { close(resultCh) }()
+		resultCh <- instance.Data()
 	})
 
 	if err != nil {
+		close(resultCh)
 		panic(err)
 	}
 
-	return data
+	return <-resultCh
 }

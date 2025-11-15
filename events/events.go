@@ -1,6 +1,8 @@
 package events
 
-import "reflect"
+import (
+	"reflect"
+)
 
 type EntityEvent struct {
 	Id         string
