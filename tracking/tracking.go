@@ -2,6 +2,7 @@ package tracking
 
 import (
 	"reflect"
+	"time"
 
 	"pmaas.io/spi"
 )
@@ -10,9 +11,15 @@ const ModePoll = 1
 const ModePush = 2
 
 type Config struct {
-	Name         string
-	TrackingMode int
-	Schema       string
+	Name                string
+	TrackingMode        int
+	PollIntervalSeconds int
+	Schema              string
+}
+
+type DataSample struct {
+	LastUpdateTime time.Time
+	Data           any
 }
 
 func (tc *Config) Clone() Config {
@@ -21,7 +28,7 @@ func (tc *Config) Clone() Config {
 
 type Trackable interface {
 	TrackingConfig() Config
-	Data() any
+	Data() DataSample
 }
 
 var TrackableType = reflect.TypeOf((*Trackable)(nil)).Elem()
@@ -58,8 +65,8 @@ func (t *trackableStub) TrackingConfig() Config {
 	return <-resultCh
 }
 
-func (t *trackableStub) Data() any {
-	resultCh := make(chan any)
+func (t *trackableStub) Data() DataSample {
+	resultCh := make(chan DataSample)
 	err := t.invokeFn(func(instance Trackable) {
 		defer func() { close(resultCh) }()
 		resultCh <- instance.Data()
