@@ -10,11 +10,15 @@ import (
 const ModePoll = 1
 const ModePush = 2
 
+type Schema struct {
+	DataStructType reflect.Type
+}
+
 type Config struct {
 	Name                string
 	TrackingMode        int
 	PollIntervalSeconds int
-	Schema              string
+	Schema              Schema
 }
 
 type DataSample struct {
