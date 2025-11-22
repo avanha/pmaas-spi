@@ -10,8 +10,11 @@ import (
 const ModePoll = 1
 const ModePush = 2
 
+type InsertArgFactoryFunc func(*any) ([]any, error)
+
 type Schema struct {
-	DataStructType reflect.Type
+	DataStructType     reflect.Type
+	InsertArgFactoryFn InsertArgFactoryFunc
 }
 
 type Config struct {

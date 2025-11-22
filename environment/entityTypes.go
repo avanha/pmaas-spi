@@ -1,6 +1,7 @@
 package environment
 
 import (
+	"reflect"
 	"time"
 )
 
@@ -27,16 +28,29 @@ func (bd BatteryData) IsEmpty() bool {
 }
 
 type SensorData struct {
-	Temperature    float32
+	Temperature    float32 `track:"always"`
 	HasHumidity    bool
-	Humidity       float32
-	LastUpdateTime time.Time
+	Humidity       float32   `track:"always,nullable"`
+	LastUpdateTime time.Time `track:"always"`
 }
 
 var emptySensorData = SensorData{}
 
+var SensorDataType = reflect.TypeOf((*SensorData)(nil)).Elem()
+
 func (sd SensorData) IsEmpty() bool {
 	return sd == emptySensorData
+}
+
+func SensorDataToInsertArgs(anyData *any) ([]any, error) {
+	sd := (*anyData).(SensorData)
+	var humidity any = nil
+
+	if sd.HasHumidity {
+		humidity = sd.Humidity
+	}
+
+	return []any{sd.Temperature, humidity, sd.LastUpdateTime}, nil
 }
 
 type WirelessThermometer struct {
