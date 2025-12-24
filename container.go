@@ -9,7 +9,8 @@ import (
 )
 
 type RenderListOptions struct {
-	Title string
+	Title  string
+	Header any
 }
 
 // IPMAASContainer is an interface for plugins to interact with the PMAAS server.
