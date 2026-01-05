@@ -56,4 +56,9 @@ type IPMAASContainer interface {
 	// orchestrate that in the function.  For example, the function can send the result back via a channel.
 	// Warning: Calling this function when already executing on the plugin's main GoRoutine will result in deadlock.
 	EnqueueOnPluginGoRoutine(f func()) error
+
+	// EnqueueOnServerGoRoutine Enqueues the passed functions for execution on the server's main GoRoutine.
+	// The server's main GoRoutine is the one used to call PMAAS.Run().
+	// Use this to execute callbacks registered during the server configuration phase.
+	EnqueueOnServerGoRoutine(invocations []func()) error
 }
