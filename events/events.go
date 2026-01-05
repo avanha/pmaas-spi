@@ -26,8 +26,9 @@ type EntityStateChangedEvent struct {
 }
 
 type EventInfo struct {
-	EventSourceType reflect.Type
-	Event           any
+	SourceEntityId   string
+	SourcePluginType reflect.Type
+	Event            any
 }
 
 type EventPredicate func(eventInfo *EventInfo) bool
