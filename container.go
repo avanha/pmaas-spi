@@ -64,7 +64,11 @@ type IPMAASContainer interface {
 	EnqueueOnServerGoRoutine(invocations []func()) error
 }
 
-func ExecValueFunctionOnPluginGoRoutine[R any](container IPMAASContainer, f func() R, defaultValueFn func() R) (R, error) {
+func ExecValueFunctionOnPluginGoRoutine[R any](
+	container IPMAASContainer,
+	f func() R,
+	defaultValueFn func() R,
+	errorMessage string) (R, error) {
 	resultCh := make(chan R)
 	err := container.EnqueueOnPluginGoRoutine(func() {
 		resultCh <- f()
@@ -75,7 +79,8 @@ func ExecValueFunctionOnPluginGoRoutine[R any](container IPMAASContainer, f func
 		close(resultCh)
 
 		return defaultValueFn(),
-			fmt.Errorf("unable to enqueue value function execution on Plugin goroutine: %w", err)
+			fmt.Errorf("%s: %w", errorMessage,
+				fmt.Errorf("unable to enqueue value function execution on Plugin goroutine: %w", err))
 	}
 
 	result := <-resultCh
