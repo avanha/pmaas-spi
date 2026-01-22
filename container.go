@@ -1,6 +1,7 @@
 package spi
 
 import (
+	"fmt"
 	"io/fs"
 	"net/http"
 	"reflect"
@@ -32,15 +33,15 @@ type IPMAASContainer interface {
 	RegisterEntity(uniqueData string, entityType reflect.Type, name string,
 		invocationHandlerFunc EntityInvocationHandlerFunc) (string, error)
 
-	// DeregisterEntity Removes an entity previously registered with the server.  Pass the id returned from the
+	// DeregisterEntity Removes an entity previously registered with the server.  Pass the ID returned from the
 	// previous call to RegisterEntity.
 	DeregisterEntity(id string) error
 
-	// AssertEntityType Verifies that an entity with the given ID exists and is of the correct type
+	// AssertEntityType Verifies that an entity with the given ID exists and is of the passed type
 	AssertEntityType(pmaasEntityId string, entityType reflect.Type) error
 
-	// InvokeOnEntity Invokes the supplied function on the plugin-runner go-routine that owns the specified entity,
-	// supplying the entity.
+	// InvokeOnEntity Invokes the supplied function on the plugin-runner goroutine of the plugin that owns the specified
+	//entity, supplying the entity.
 	InvokeOnEntity(id string, function func(entity any)) error
 
 	// RegisterEventReceiver Registers a receiver for events.  If successful, returns an integer handle that can be used
@@ -61,4 +62,23 @@ type IPMAASContainer interface {
 	// The server's main GoRoutine is the one used to call PMAAS.Run().
 	// Use this to execute callbacks registered during the server configuration phase.
 	EnqueueOnServerGoRoutine(invocations []func()) error
+}
+
+func ExecValueFunctionOnPluginGoRoutine[R any](container IPMAASContainer, f func() R, defaultValueFn func() R) (R, error) {
+	resultCh := make(chan R)
+	err := container.EnqueueOnPluginGoRoutine(func() {
+		resultCh <- f()
+		close(resultCh)
+	})
+
+	if err != nil {
+		close(resultCh)
+
+		return defaultValueFn(),
+			fmt.Errorf("unable to enqueue value function execution on Plugin goroutine: %w", err)
+	}
+
+	result := <-resultCh
+
+	return result, nil
 }
