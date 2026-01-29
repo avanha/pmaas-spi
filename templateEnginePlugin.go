@@ -1,6 +1,7 @@
 package spi
 
 import (
+	"bytes"
 	"fmt"
 	"io"
 	"io/fs"
@@ -46,7 +47,7 @@ func TemplateBasedRendererFactory(
 	}
 
 	// Declare a function that casts the entity to the expected type and evaluates it via the template loaded above
-	renderer := func(w io.Writer, entity any) error {
+	streamingRenderer := func(w io.Writer, entity any) error {
 		if ok := typeCheckFn(entity); !ok {
 			return fmt.Errorf("item is not an instance of %s", typeName)
 		}
@@ -58,8 +59,20 @@ func TemplateBasedRendererFactory(
 		return nil
 	}
 
+	renderer := func(entity any) (string, error) {
+		var buffer bytes.Buffer
+		err := streamingRenderer(&buffer, entity)
+
+		if err != nil {
+			return "", err
+		}
+
+		return buffer.String(), nil
+	}
+
 	return EntityRenderer{
-		StreamingRenderFunc: renderer,
+		RenderFunc:          renderer,
+		StreamingRenderFunc: streamingRenderer,
 		Styles:              compiledTemplate.Styles,
 		Scripts:             compiledTemplate.Scripts,
 	}, nil
