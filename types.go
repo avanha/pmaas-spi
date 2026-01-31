@@ -6,7 +6,7 @@ import (
 
 type EntityInvocationHandlerFunc func(func(entity any)) error
 
-type EntityStubFactoryFunc func(container IPMAASContainer, pmaasEntityId string) any
+type EntityStubFactoryFunc func() (any, error)
 
 type EntityRenderFunc func(entity any) (string, error)
 

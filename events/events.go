@@ -12,6 +12,7 @@ type EntityEvent struct {
 
 type EntityRegisteredEvent struct {
 	EntityEvent
+	StubFactoryFn func() (any, error)
 }
 
 type EntityDeregisteredEvent struct {
