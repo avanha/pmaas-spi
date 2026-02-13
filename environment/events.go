@@ -1,7 +1,7 @@
 package environment
 
 import (
-	"pmaas.io/spi/events"
+	"github.com/avanha/pmaas-spi/events"
 )
 
 type TemperatureChangeEvent struct {

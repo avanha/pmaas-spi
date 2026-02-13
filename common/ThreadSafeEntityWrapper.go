@@ -1,6 +1,6 @@
 package common
 
-import "pmaas.io/spi"
+import "github.com/avanha/pmaas-spi"
 
 type ThreadSafeEntityWrapper[T any] struct {
 	Container spi.IPMAASContainer

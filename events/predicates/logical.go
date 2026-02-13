@@ -1,7 +1,7 @@
 package predicates
 
 import (
-	"pmaas.io/spi/events"
+	"github.com/avanha/pmaas-spi/events"
 	"reflect"
 )
 

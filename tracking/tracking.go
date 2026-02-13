@@ -4,7 +4,7 @@ import (
 	"reflect"
 	"time"
 
-	"pmaas.io/spi"
+	"github.com/avanha/pmaas-spi"
 )
 
 const ModePoll = 1

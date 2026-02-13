@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"reflect"
 
-	"pmaas.io/spi/events"
+	"github.com/avanha/pmaas-spi/events"
 )
 
 type RenderListOptions struct {
