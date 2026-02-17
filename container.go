@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"reflect"
 
+	"github.com/avanha/pmaas-spi/entity"
 	"github.com/avanha/pmaas-spi/events"
 )
 
@@ -42,6 +43,9 @@ type IPMAASContainer interface {
 
 	// AssertEntityType Verifies that an entity with the given ID exists and is of the passed type
 	AssertEntityType(pmaasEntityId string, entityType reflect.Type) error
+
+	// GetEntities Returns a list of entities that match the supplied predicate.
+	GetEntities(predicate func(info *entity.RegisteredEntityInfo) bool) ([]entity.RegisteredEntityInfo, error)
 
 	// InvokeOnEntity Invokes the supplied function on the plugin-runner goroutine of the plugin that owns the specified
 	//entity, supplying the entity.
