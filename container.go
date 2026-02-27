@@ -69,6 +69,10 @@ type IPMAASContainer interface {
 	// The server's main GoRoutine is the one used to call PMAAS.Run().
 	// Use this to execute callbacks registered during the server configuration phase.
 	EnqueueOnServerGoRoutine(invocations []func()) error
+
+	// ClosedCallbackChannel returns an already closed callback channel.  You can use this when you know
+	// there will not be a need for any callbacks.
+	ClosedCallbackChannel() chan func()
 }
 
 func ExecValueFunctionOnPluginGoRoutine[R any](
