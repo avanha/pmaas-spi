@@ -29,8 +29,11 @@ type IPMAASContainer interface {
 	// templates or static file content for serving over HTTP.
 	ProvideContentFS(fs fs.FS, prefix string)
 
-	// RegisterEntity Registers an entity with server.  This gives it a unique name, which can later be looked up for
+	// RegisterEntity Registers an entity with server.  This gives it a unique name, which can be used for
 	// further interaction with the entity.
+	//
+	// The server guarantees that the provided stubFactoryFn will only ever be called on the
+	// plugin's main goroutine.
 	RegisterEntity(
 		uniqueData string,
 		entityType reflect.Type,
