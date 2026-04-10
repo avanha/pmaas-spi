@@ -37,38 +37,3 @@ type Trackable interface {
 }
 
 var TrackableType = reflect.TypeOf((*Trackable)(nil)).Elem()
-
-type trackableStub struct {
-	pmaasEntityId string
-	invokeFn      func(func(trackable Trackable)) error
-}
-
-func (t *trackableStub) TrackingConfig() Config {
-	resultCh := make(chan Config)
-	err := t.invokeFn(func(instance Trackable) {
-		defer func() { close(resultCh) }()
-		resultCh <- instance.TrackingConfig()
-	})
-
-	if err != nil {
-		close(resultCh)
-		panic(err)
-	}
-
-	return <-resultCh
-}
-
-func (t *trackableStub) Data() DataSample {
-	resultCh := make(chan DataSample)
-	err := t.invokeFn(func(instance Trackable) {
-		defer func() { close(resultCh) }()
-		resultCh <- instance.Data()
-	})
-
-	if err != nil {
-		close(resultCh)
-		panic(err)
-	}
-
-	return <-resultCh
-}
