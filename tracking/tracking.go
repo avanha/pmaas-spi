@@ -3,8 +3,6 @@ package tracking
 import (
 	"reflect"
 	"time"
-
-	"github.com/avanha/pmaas-spi"
 )
 
 const ModePoll = 1
@@ -39,18 +37,6 @@ type Trackable interface {
 }
 
 var TrackableType = reflect.TypeOf((*Trackable)(nil)).Elem()
-
-func CreateTrackableStub(container spi.IPMAASContainer, pmaasId string) Trackable {
-	invoker := func(f func(trackable Trackable)) error {
-		return container.InvokeOnEntity(pmaasId, func(entity any) {
-			f(entity.(Trackable))
-		})
-	}
-	return &trackableStub{
-		pmaasEntityId: pmaasId,
-		invokeFn:      invoker,
-	}
-}
 
 type trackableStub struct {
 	pmaasEntityId string
