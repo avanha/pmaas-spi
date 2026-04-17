@@ -37,3 +37,12 @@ type Trackable interface {
 }
 
 var TrackableType = reflect.TypeOf((*Trackable)(nil)).Elem()
+
+type TrackableHistoryRepo interface {
+	GetHistory() <-chan any
+}
+
+type HistoryAwareTrackable interface {
+	Trackable
+	SetHistoryRepo(TrackableHistoryRepo)
+}
