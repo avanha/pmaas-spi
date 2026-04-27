@@ -44,5 +44,5 @@ type TrackableHistoryRepo interface {
 
 type HistoryAwareTrackable interface {
 	Trackable
-	SetHistoryRepo(TrackableHistoryRepo)
+	SetHistoryRepo(TrackableHistoryRepo) error
 }
