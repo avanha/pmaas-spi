@@ -38,8 +38,14 @@ type Trackable interface {
 
 var TrackableType = reflect.TypeOf((*Trackable)(nil)).Elem()
 
+type ResultOrError[T any] struct {
+	Error  error
+	Result T
+}
+
 type TrackableHistoryRepo interface {
-	GetHistory() <-chan any
+	GetHistory() ResultOrError[<-chan DataSample]
+	GetMostRecentSample() ResultOrError[DataSample]
 }
 
 type HistoryAwareTrackable interface {
