@@ -20,10 +20,15 @@ type HttpHandlerOptions struct {
 	RequiresXsrfValidation bool
 }
 
+type RequestObjectFactoryFunc func() any
+
+type JsonHandlerFunc func(w http.ResponseWriter, r *http.Request, request any) (any, error)
+
 // IPMAASContainer is an interface for plugins to interact with the PMAAS server.
 type IPMAASContainer interface {
 	AddRoute(path string, handlerFunc http.HandlerFunc)
 	AddRouteWithOptions(path string, handlerFunc http.HandlerFunc, options *HttpHandlerOptions)
+	AddJsonRoute(path string, requestFactoryFnc RequestObjectFactoryFunc, handlerFunc JsonHandlerFunc)
 	BroadcastEvent(entityEventId string, event any) error
 	RenderList(w http.ResponseWriter, r *http.Request, options RenderListOptions, items []interface{})
 	GetTemplate(templateInfo *TemplateInfo) (CompiledTemplate, error)
