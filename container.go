@@ -87,6 +87,9 @@ type IPMAASContainer interface {
 	// ClosedCallbackChannel returns an already closed callback channel.  You can use this when you know
 	// there will not be a need for any callbacks.
 	ClosedCallbackChannel() chan func()
+
+	SaveConfig(config any) error
+	LoadConfig(f func(typeName string) any) (any, error)
 }
 
 func ExecValueFunctionOnPluginGoRoutine[R any](
