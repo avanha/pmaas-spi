@@ -36,6 +36,15 @@ type IPMAASContainer interface {
 	RegisterEntityRenderer(entityType reflect.Type, renderFactory EntityRendererFactory)
 	EnableStaticContent(staticContentDir string)
 
+	// GetBaseUrl returns the base URL (scheme://host[:port]) that should be used to build absolute
+	// URLs (e.g. OAuth redirect URIs) back to this server, chosen from the server's configured list
+	// of base URLs by matching the given request's Host header. This lets a single deployment serve
+	// requests under multiple externally-reachable names (e.g. "localhost" during development and a
+	// real hostname in production) without trusting the request itself for scheme/host: the returned
+	// value always comes from server configuration, never from request headers directly. Returns an
+	// error if no configured base URL matches the request's Host header.
+	GetBaseUrl(r *http.Request) (string, error)
+
 	// ProvideContentFS Registers an io/fs.FS instance that the server can use to read plugin resources such as
 	// templates or static file content for serving over HTTP.
 	ProvideContentFS(fs fs.FS, prefix string)
