@@ -63,3 +63,26 @@ type WirelessThermometer struct {
 type IWirelessThermometer interface {
 	GetWirelessThermometerData() WirelessThermometer
 }
+
+// Thermostat is the generic, producer-facing representation of a thermostat-like device: a thermometer
+// and hygrometer (via the embedded SensorData) plus the HVAC-specific attributes that distinguish a
+// thermostat from a plain sensor. Any plugin whose device fits this shape can implement IThermostat to
+// advertise it, the same way WirelessThermometer/IWirelessThermometer works for wireless sensors.
+type Thermostat struct {
+	Name       string
+	SensorData SensorData
+
+	HvacStatus string
+	EcoMode    string
+
+	HeatSetpoint float32
+	CoolSetpoint float32
+
+	// LastUpdateTime is the most recent update time across all of this thermostat's fields, for
+	// consumers that just want a single "how fresh is this" value rather than per-field ones.
+	LastUpdateTime time.Time
+}
+
+type IThermostat interface {
+	GetThermostatData() Thermostat
+}
