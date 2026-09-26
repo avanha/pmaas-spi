@@ -72,8 +72,13 @@ type Thermostat struct {
 	Name       string
 	SensorData SensorData
 
+	// HvacStatus is what the system is actually doing right now: "OFF", "HEATING", "COOLING".
 	HvacStatus string
-	EcoMode    string
+	// Mode is the configured mode, independent of HvacStatus: "HEAT", "COOL", "HEATCOOL", "OFF". A
+	// HEATCOOL-mode thermostat has both HeatSetpoint and CoolSetpoint meaningful at once, regardless of
+	// whether HvacStatus currently shows it actively running either one.
+	Mode    string
+	EcoMode string
 
 	HeatSetpoint float32
 	CoolSetpoint float32
