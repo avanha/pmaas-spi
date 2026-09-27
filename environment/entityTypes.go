@@ -53,6 +53,30 @@ func SensorDataToInsertArgs(anyData *any) ([]any, error) {
 	return []any{sd.Temperature, humidity, sd.LastUpdateTime}, nil
 }
 
+// Connectivity represents whether a device is currently reachable. The zero value (ConnectivityUnknown)
+// deliberately doesn't correspond to either real status: Go zero-initializes int fields, so a struct
+// literal that omits Connectivity, or data decoded from an older/incomplete shape, would otherwise
+// silently read as a real, specific status (whichever one happened to be assigned 0) rather than
+// signaling "this was never actually reported."
+type Connectivity int
+
+const (
+	ConnectivityUnknown Connectivity = iota
+	ConnectivityOnline
+	ConnectivityOffline
+)
+
+func (c Connectivity) String() string {
+	switch c {
+	case ConnectivityOnline:
+		return "Online"
+	case ConnectivityOffline:
+		return "Offline"
+	default:
+		return "Unknown"
+	}
+}
+
 type WirelessThermometer struct {
 	Name        string
 	RSSIData    RSSIData
@@ -83,9 +107,9 @@ type Thermostat struct {
 	HeatSetpoint float32
 	CoolSetpoint float32
 
-	// Connectivity is "ONLINE" or "OFFLINE". OfflineSince is when it last transitioned to "OFFLINE";
-	// zero if it's never been observed offline (meaningless while Connectivity == "ONLINE").
-	Connectivity string
+	// OfflineSince is when Connectivity last transitioned to ConnectivityOffline; zero if it's never
+	// been observed offline (meaningless while Connectivity != ConnectivityOffline).
+	Connectivity Connectivity
 	OfflineSince time.Time
 
 	// LastUpdateTime is the most recent update time across all of this thermostat's fields, for
