@@ -5,6 +5,7 @@ import (
 	"io/fs"
 	"net/http"
 	"reflect"
+	"strings"
 
 	"github.com/avanha/pmaas-spi/entity"
 	"github.com/avanha/pmaas-spi/events"
@@ -15,9 +16,62 @@ type RenderListOptions struct {
 	Header any
 }
 
+// PluginRoutePrefix is the fixed prefix under which every plugin's routes are namespaced.
+// The server always constructs a plugin's full route pattern as PluginRoutePrefix + ShortName +
+// "/" + the relative path given to AddRoute/AddRouteWithOptions/AddJsonRoute.
+const PluginRoutePrefix = "/plugins/"
+
+// PluginFullPath builds the full, server-rooted path for a route a plugin registered with the
+// given relative path. Plugins normally never need this - the server applies it automatically
+// to every AddRoute/AddRouteWithOptions/AddJsonRoute call - but a plugin that needs to build a
+// fully-qualified URL to one of its own routes for use outside the server itself (e.g. an OAuth
+// redirect URI) can use it to stay consistent with the server's own path construction rather than
+// duplicating the "/plugins/<name>/" convention as a literal string.
+func PluginFullPath(pluginShortName string, relativePath string) string {
+	return PluginRoutePrefix + pluginShortName + "/" + strings.TrimPrefix(relativePath, "/")
+}
+
+// PluginAssetPrefix is the fixed prefix under which a plugin's static content and template
+// Scripts/Styles are served. It's deliberately disjoint from PluginRoutePrefix: static content is
+// mounted as a whole subtree at a plugin's asset root, so if it shared PluginRoutePrefix, that
+// mount would collide with the plugin's own list route (both would be the exact pattern
+// "/plugins/<name>/", which net/http.ServeMux refuses to register twice) regardless of what
+// relative paths the plugin chooses for AddRoute.
+const PluginAssetPrefix = "/plugins-assets/"
+
+// PluginAssetFullPath builds the full, server-rooted path for a plugin asset (a static file, or a
+// template's Scripts/Styles entry) at the given path relative to the plugin's asset root.
+func PluginAssetFullPath(pluginShortName string, relativePath string) string {
+	return PluginAssetPrefix + pluginShortName + "/" + strings.TrimPrefix(relativePath, "/")
+}
+
 type HttpHandlerOptions struct {
 	SupportsXsrfValidation bool
 	RequiresXsrfValidation bool
+
+	// IncludeInMenu controls whether this route gets a navigation menu entry. If nil, the
+	// server applies its default: a plugin's list route (registered with relativePath "")
+	// defaults to included, every other route defaults to excluded. Set explicitly to
+	// override either default.
+	IncludeInMenu *bool
+
+	// MenuLabel is the display text for this route's menu entry. If empty, the server falls
+	// back to the plugin's ShortName() for the list route, or the route's relative path for
+	// any other route.
+	MenuLabel string
+
+	// MenuIcon is an optional icon identifier for this route's menu entry.
+	MenuIcon string
+}
+
+// MenuEntry describes one navigation menu item, built from the routes plugins have registered
+// as menu-visible. Only a plugin's list route (relativePath "") can have Children - the server
+// supports a single level of nesting, so a non-list-route entry never has children of its own.
+type MenuEntry struct {
+	Label    string
+	Icon     string
+	Path     string
+	Children []MenuEntry
 }
 
 type RequestObjectFactoryFunc func() any
@@ -26,9 +80,32 @@ type JsonHandlerFunc func(w http.ResponseWriter, r *http.Request, request any) (
 
 // IPMAASContainer is an interface for plugins to interact with the PMAAS server.
 type IPMAASContainer interface {
+	// AddRoute registers a handler for a path relative to this plugin's namespace. The
+	// server serves it at PluginFullPath(pluginShortName, path) - e.g. relativePath "" is
+	// the plugin's list route ("/plugins/<name>/"), and relativePath "callback" is served at
+	// "/plugins/<name>/callback". Plugins never include the "/plugins/<name>/" prefix
+	// themselves.
 	AddRoute(path string, handlerFunc http.HandlerFunc)
+	// AddRouteWithOptions is AddRoute with explicit HttpHandlerOptions, e.g. to control this
+	// route's menu visibility/label/icon.
 	AddRouteWithOptions(path string, handlerFunc http.HandlerFunc, options *HttpHandlerOptions)
+	// AddJsonRoute is AddRoute for a JSON request/response handler; path is relative exactly
+	// as in AddRoute.
 	AddJsonRoute(path string, requestFactoryFnc RequestObjectFactoryFunc, handlerFunc JsonHandlerFunc)
+	// GetMenu returns the current navigation menu, built from every plugin's menu-visible
+	// routes, in plugin-registration order.
+	GetMenu() []MenuEntry
+	// RouteFullPath returns the full, server-rooted path for one of this plugin's own routes at
+	// the given path relative to its own namespace - equivalent to
+	// PluginFullPath(ShortName(), relativePath), but without the plugin needing to know or pass
+	// its own ShortName(). Useful for building a fully-qualified URL to one of the plugin's own
+	// routes for use outside the server itself (e.g. an OAuth redirect URI).
+	RouteFullPath(relativePath string) string
+	// AssetFullPath returns the full, server-rooted path for one of this plugin's own static
+	// content/template assets at the given path relative to its own asset root - equivalent to
+	// PluginAssetFullPath(ShortName(), relativePath), but without the plugin needing to know or
+	// pass its own ShortName().
+	AssetFullPath(relativePath string) string
 	BroadcastEvent(entityEventId string, event any) error
 	RenderList(w http.ResponseWriter, r *http.Request, options RenderListOptions, items []interface{})
 	GetTemplate(templateInfo *TemplateInfo) (CompiledTemplate, error)
