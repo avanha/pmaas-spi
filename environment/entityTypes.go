@@ -107,10 +107,13 @@ type Thermostat struct {
 	HeatSetpoint float32
 	CoolSetpoint float32
 
-	// OfflineSince is when Connectivity last transitioned to ConnectivityOffline; zero if it's never
-	// been observed offline (meaningless while Connectivity != ConnectivityOffline).
+	// OfflineSince is when Connectivity last transitioned to ConnectivityOffline, and OnlineSince is the
+	// same for ConnectivityOnline — together they let a consumer show connectivity history (e.g. "last
+	// offline"/"last online") regardless of which state the device is in right now, not just the current
+	// one. Either is zero if that state has never actually been observed.
 	Connectivity Connectivity
 	OfflineSince time.Time
+	OnlineSince  time.Time
 
 	// LastUpdateTime is the most recent update time across all of this thermostat's fields, for
 	// consumers that just want a single "how fresh is this" value rather than per-field ones.
