@@ -37,7 +37,16 @@ type MemoryStats struct {
 // ServerStatus is the data behind the server's root ("/") status page - see
 // IPMAASContainer.ProvideRootStatusHandler.
 type ServerStatus struct {
-	Uptime  time.Duration
+	Uptime time.Duration
+
+	// AssemblyName/AssemblyVersion identify the running assembly (the main module that wired
+	// this particular PMAAS binary together, e.g. pmaas-assembly-demo) - AssemblyName is the
+	// last path segment of its module path, AssemblyVersion its build version (see
+	// PluginVersion.Version for what that value can look like). Both empty if no build info is
+	// available at all.
+	AssemblyName    string
+	AssemblyVersion string
+
 	Plugins []PluginVersion
 
 	// LoadAverage is nil where a load average isn't available - currently anywhere other than

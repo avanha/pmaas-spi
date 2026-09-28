@@ -25,7 +25,15 @@ const PluginRoutePrefix = "/plugins/"
 const PluginAssetPrefix = "/plugins-assets/"
 
 type RenderListOptions struct {
-	Title  string
+	Title string
+
+	// TitleSuffix is optional additional text shown after Title, rendered smaller/muted (see
+	// layout.htmlt's "title-suffix" class) since it can be an arbitrarily long string that would
+	// otherwise threaten to overflow the page header - e.g. the root status page's assembly
+	// name/version (see pmaas-plugin-basicwebui's statusTitle). Ignored (no visual effect) when
+	// empty.
+	TitleSuffix string
+
 	Header any
 }
 
