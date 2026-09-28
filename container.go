@@ -5,31 +5,15 @@ import (
 	"io/fs"
 	"net/http"
 	"reflect"
-	"strings"
 
 	"github.com/avanha/pmaas-spi/entity"
 	"github.com/avanha/pmaas-spi/events"
 )
 
-type RenderListOptions struct {
-	Title  string
-	Header any
-}
-
 // PluginRoutePrefix is the fixed prefix under which every plugin's routes are namespaced.
 // The server always constructs a plugin's full route pattern as PluginRoutePrefix + ShortName +
 // "/" + the relative path given to AddRoute/AddRouteWithOptions/AddJsonRoute.
 const PluginRoutePrefix = "/plugins/"
-
-// PluginFullPath builds the full, server-rooted path for a route a plugin registered with the
-// given relative path. Plugins normally never need this - the server applies it automatically
-// to every AddRoute/AddRouteWithOptions/AddJsonRoute call - but a plugin that needs to build a
-// fully-qualified URL to one of its own routes for use outside the server itself (e.g. an OAuth
-// redirect URI) can use it to stay consistent with the server's own path construction rather than
-// duplicating the "/plugins/<name>/" convention as a literal string.
-func PluginFullPath(pluginShortName string, relativePath string) string {
-	return PluginRoutePrefix + pluginShortName + "/" + strings.TrimPrefix(relativePath, "/")
-}
 
 // PluginAssetPrefix is the fixed prefix under which a plugin's static content and template
 // Scripts/Styles are served. It's deliberately disjoint from PluginRoutePrefix: static content is
@@ -39,10 +23,9 @@ func PluginFullPath(pluginShortName string, relativePath string) string {
 // relative paths the plugin chooses for AddRoute.
 const PluginAssetPrefix = "/plugins-assets/"
 
-// PluginAssetFullPath builds the full, server-rooted path for a plugin asset (a static file, or a
-// template's Scripts/Styles entry) at the given path relative to the plugin's asset root.
-func PluginAssetFullPath(pluginShortName string, relativePath string) string {
-	return PluginAssetPrefix + pluginShortName + "/" + strings.TrimPrefix(relativePath, "/")
+type RenderListOptions struct {
+	Title  string
+	Header any
 }
 
 type HttpHandlerOptions struct {
