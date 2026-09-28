@@ -1,6 +1,7 @@
 package spi
 
 import (
+	"crypto/tls"
 	"fmt"
 	"io/fs"
 	"net/http"
@@ -159,6 +160,23 @@ type IPMAASContainer interface {
 
 	SaveConfig(config any) error
 	LoadConfig(f func(typeName string) any) (any, error)
+
+	// ProvideTLSCertificate registers this plugin as the server's TLS certificate provider. The
+	// getCertificateFunc is stored as-is and handed to Go's net/http.Server as
+	// tls.Config.GetCertificate, so it's invoked fresh on every incoming TLS handshake - a plugin
+	// that renews/rotates its certificate in the background (e.g. an ACME client) doesn't need to
+	// tell the server anything when that happens: the next handshake after a renewal automatically
+	// picks up whatever certificate the function now returns. Because it's called concurrently, once
+	// per handshake, getCertificateFunc must be safe for concurrent use.
+	//
+	// At most one plugin may call this - it returns an error if a certificate provider has already
+	// been registered by another plugin. If no plugin ever calls it, the server continues to serve
+	// plain HTTP exactly as it did before this method existed.
+	//
+	// Must be called during Init or Start, before this plugin's Start returns - the server reads the
+	// registered provider (if any) only once, when it starts listening, which happens strictly after
+	// every plugin has finished starting.
+	ProvideTLSCertificate(getCertificateFunc func(*tls.ClientHelloInfo) (*tls.Certificate, error)) error
 }
 
 func ExecValueFunctionOnPluginGoRoutine[R any](
