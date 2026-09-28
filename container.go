@@ -177,6 +177,20 @@ type IPMAASContainer interface {
 	// registered provider (if any) only once, when it starts listening, which happens strictly after
 	// every plugin has finished starting.
 	ProvideTLSCertificate(getCertificateFunc func(*tls.ClientHelloInfo) (*tls.Certificate, error)) error
+
+	// ProvideRootStatusHandler registers this plugin as the server's root ("/") status page
+	// handler. handlerFunc is called for every request to "/", along with a freshly computed
+	// ServerStatus - the plugin owns rendering it (e.g. via its own templates), keeping that
+	// presentation logic out of pmaas-core.
+	//
+	// At most one plugin may call this - it returns an error if a handler has already been
+	// registered by another plugin. If no plugin ever calls it, the server serves a minimal
+	// placeholder page at "/" instead.
+	//
+	// Must be called during Init or Start, before this plugin's Start returns - the same
+	// timing requirement as ProvideTLSCertificate, and for the same reason: the server only
+	// reads the registered handler (if any) once, when it starts listening.
+	ProvideRootStatusHandler(handlerFunc RootStatusHandlerFunc) error
 }
 
 func ExecValueFunctionOnPluginGoRoutine[R any](
