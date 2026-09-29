@@ -47,6 +47,15 @@ type ServerStatus struct {
 	AssemblyName    string
 	AssemblyVersion string
 
+	// CommitTime is the timestamp of the git commit the running assembly was built from,
+	// sourced from the build's embedded VCS info (Go's toolchain stamps this in automatically
+	// for a build done inside a git checkout - see runtime/debug.BuildInfo.Settings' "vcs.time"
+	// key). It's the commit's time, not necessarily when `go build` was actually run. Useful
+	// as a freshness signal even when AssemblyVersion is "(devel)" (no fixed tag - this
+	// project's own go.work-based development builds) rather than a real semantic version.
+	// Zero if no VCS info was embedded at all (e.g. built outside a git checkout).
+	CommitTime time.Time
+
 	Plugins []PluginVersion
 
 	// LoadAverage is nil where a load average isn't available - currently anywhere other than
