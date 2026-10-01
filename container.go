@@ -201,26 +201,44 @@ type IPMAASContainer interface {
 	ProvideRootStatusHandler(handlerFunc RootStatusHandlerFunc) error
 }
 
+// Exec enqueues f for execution on the plugin's own goroutine and blocks until it runs,
+// returning its result. It's the "ask" half of the tell/ask split already used elsewhere in this
+// codebase (see pmaas-common/mailbox.Mailbox.Exec) - EnqueueOnPluginGoRoutine alone is
+// fire-and-forget (tell); Go doesn't support generic interface methods, so this has to be a
+// package-level function taking the container as a parameter rather than a method on
+// IPMAASContainer itself.
+//
+// The same reentrancy warning as EnqueueOnPluginGoRoutine applies: calling Exec from a function
+// already executing on the plugin's own goroutine deadlocks, since nothing will ever run f.
+func Exec[R any](container IPMAASContainer, f func() R) (R, error) {
+	resultCh := make(chan R, 1)
+
+	err := container.EnqueueOnPluginGoRoutine(func() {
+		resultCh <- f()
+	})
+
+	if err != nil {
+		var zero R
+		return zero, fmt.Errorf("unable to enqueue function execution on plugin goroutine: %w", err)
+	}
+
+	return <-resultCh, nil
+}
+
+// ExecValueFunctionOnPluginGoRoutine is Exec with a caller-supplied fallback value for when
+// enqueueing fails, and a message to wrap the resulting error with. Kept for existing callers;
+// new code should prefer Exec directly, since swallowing the enqueue failure into defaultValueFn
+// makes "enqueue failed" indistinguishable from "f legitimately returned this value".
 func ExecValueFunctionOnPluginGoRoutine[R any](
 	container IPMAASContainer,
 	f func() R,
 	defaultValueFn func() R,
 	errorMessage string) (R, error) {
-	resultCh := make(chan R)
-	err := container.EnqueueOnPluginGoRoutine(func() {
-		resultCh <- f()
-		close(resultCh)
-	})
+	result, err := Exec(container, f)
 
 	if err != nil {
-		close(resultCh)
-
-		return defaultValueFn(),
-			fmt.Errorf("%s: %w", errorMessage,
-				fmt.Errorf("unable to enqueue value function execution on Plugin goroutine: %w", err))
+		return defaultValueFn(), fmt.Errorf("%s: %w", errorMessage, err)
 	}
-
-	result := <-resultCh
 
 	return result, nil
 }
