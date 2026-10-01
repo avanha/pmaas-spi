@@ -226,9 +226,8 @@ func Exec[R any](container IPMAASContainer, f func() R) (R, error) {
 }
 
 // ExecValueFunctionOnPluginGoRoutine is Exec with a caller-supplied fallback value for when
-// enqueueing fails, and a message to wrap the resulting error with. Kept for existing callers;
-// new code should prefer Exec directly, since swallowing the enqueue failure into defaultValueFn
-// makes "enqueue failed" indistinguishable from "f legitimately returned this value".
+// enqueueing fails, and a message to wrap the resulting error with. Callers should probably handle the error,
+// but can be useful if you really don't care.
 func ExecValueFunctionOnPluginGoRoutine[R any](
 	container IPMAASContainer,
 	f func() R,
