@@ -28,18 +28,22 @@ func (bd BatteryData) IsEmpty() bool {
 }
 
 type SensorData struct {
+	// HasData is true once the source has actually produced a reading. Without it, a source that
+	// hasn't yet heard from its device is indistinguishable from one legitimately reporting 0 degrees
+	// and 0% humidity. Producers must set it on every reading they publish; consumers ignore the
+	// other fields while it's false.
+	HasData        bool
 	Temperature    float32 `track:"always"`
 	HasHumidity    bool
 	Humidity       float32   `track:"always,nullable"`
 	LastUpdateTime time.Time `track:"always"`
 }
 
-var emptySensorData = SensorData{}
-
 var SensorDataType = reflect.TypeOf((*SensorData)(nil)).Elem()
 
+// IsEmpty reports whether sd carries no reading yet (see HasData).
 func (sd SensorData) IsEmpty() bool {
-	return sd == emptySensorData
+	return !sd.HasData
 }
 
 func SensorDataToInsertArgs(anyData *any) ([]any, error) {
