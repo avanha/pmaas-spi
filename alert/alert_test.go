@@ -99,3 +99,51 @@ func TestSeverity(t *testing.T) {
 		t.Error("severities must order from least to most urgent, callers compare them")
 	}
 }
+
+func TestPublishSummary_BroadcastsASummaryEventFromTheSource(t *testing.T) {
+	b := &recordingBroadcaster{}
+
+	if err := PublishSummary(b, "alertconsole", 2, SeverityCritical); err != nil {
+		t.Fatal(err)
+	}
+
+	want := SummaryEvent{Unacknowledged: 2, MostSevere: SeverityCritical}
+
+	if len(b.events) != 1 || !reflect.DeepEqual(b.events[0], want) || b.ids[0] != "alertconsole" {
+		t.Fatalf("unexpected broadcast: ids=%v events=%+v", b.ids, b.events)
+	}
+}
+
+func TestPublishSummary_NothingUnacknowledgedHasNoSeverity(t *testing.T) {
+	b := &recordingBroadcaster{}
+
+	if err := PublishSummary(b, "alertconsole", 0, SeverityWarning); err != nil {
+		t.Fatal(err)
+	}
+
+	if !reflect.DeepEqual(b.events[0], SummaryEvent{}) {
+		t.Fatalf("unexpected event %+v", b.events[0])
+	}
+}
+
+func TestPublishSummary_ReturnsTheBroadcastError(t *testing.T) {
+	want := errors.New("boom")
+
+	if err := PublishSummary(&recordingBroadcaster{err: want}, "alertconsole", 1, SeverityInfo); !errors.Is(err, want) {
+		t.Fatalf("got %v", err)
+	}
+}
+
+func TestPredicates_SummaryIsNotAnAlertAndAnAlertIsNotASummary(t *testing.T) {
+	summary := &events.EventInfo{Event: SummaryEvent{}}
+	raised := &events.EventInfo{Event: RaisedEvent{}}
+
+	if !SummaryPredicate(summary) || SummaryPredicate(raised) || SummaryPredicate(&events.EventInfo{Event: "x"}) {
+		t.Error("SummaryPredicate matched the wrong events")
+	}
+
+	// A console that re-published its summary on receiving one would loop forever.
+	if EventPredicate(summary) {
+		t.Error("EventPredicate must not match a SummaryEvent")
+	}
+}

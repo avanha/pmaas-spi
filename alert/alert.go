@@ -74,6 +74,21 @@ type ClearedEvent struct {
 	Key    string
 }
 
+// SummaryEvent is broadcast by whatever keeps track of which alerts the user has dealt with (the alert console),
+// each time that changes, so that something else can show the state at a glance without keeping the alerts
+// itself, such as an indicator in a page header. It's about what still needs the user's attention: an alert
+// the user has acknowledged isn't counted, until it escalates.
+//
+// It isn't a RaisedEvent or ClearedEvent, and EventPredicate doesn't match it, so a plugin that listens for
+// alerts is never handed one.
+type SummaryEvent struct {
+	// Unacknowledged is how many active alerts the user hasn't acknowledged.
+	Unacknowledged int
+
+	// MostSevere is the highest severity among those. It's zero when Unacknowledged is zero.
+	MostSevere Severity
+}
+
 // Broadcaster is what's needed to raise and clear alerts, which spi.IPMAASContainer provides.
 type Broadcaster interface {
 	BroadcastEvent(entityEventId string, event any) error
@@ -107,4 +122,20 @@ func EventPredicate(eventInfo *events.EventInfo) bool {
 	default:
 		return false
 	}
+}
+
+// PublishSummary broadcasts a SummaryEvent. source stands in for the entity id, as it does for Raise.
+func PublishSummary(broadcaster Broadcaster, source string, unacknowledged int, mostSevere Severity) error {
+	if unacknowledged <= 0 {
+		unacknowledged, mostSevere = 0, 0
+	}
+
+	return broadcaster.BroadcastEvent(source, SummaryEvent{Unacknowledged: unacknowledged, MostSevere: mostSevere})
+}
+
+// SummaryPredicate is an events.EventPredicate matching SummaryEvents, for a plugin that shows them.
+func SummaryPredicate(eventInfo *events.EventInfo) bool {
+	_, ok := eventInfo.Event.(SummaryEvent)
+
+	return ok
 }
