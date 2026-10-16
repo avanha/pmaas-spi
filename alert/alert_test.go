@@ -4,6 +4,8 @@ import (
 	"errors"
 	"reflect"
 	"testing"
+	"time"
+	_ "time/tzdata"
 
 	"github.com/avanha/pmaas-spi/events"
 )
@@ -145,5 +147,114 @@ func TestPredicates_SummaryIsNotAnAlertAndAnAlertIsNotASummary(t *testing.T) {
 	// A console that re-published its summary on receiving one would loop forever.
 	if EventPredicate(summary) {
 		t.Error("EventPredicate must not match a SummaryEvent")
+	}
+}
+
+func TestAlways(t *testing.T) {
+	f := Always(SeverityCritical)
+
+	for _, at := range []time.Time{{}, time.Date(2026, 10, 16, 3, 0, 0, 0, time.UTC), time.Now()} {
+		if got := f(at); got != SeverityCritical {
+			t.Errorf("%v: %v", at, got)
+		}
+	}
+}
+
+func TestByTimeOfDay_ADayTimeWindow(t *testing.T) {
+	f := ByTimeOfDay(SeverityWarning, 7, 0, 23, 0, SeverityCritical)
+
+	at := func(hour, minute int) time.Time { return time.Date(2026, 10, 16, hour, minute, 30, 0, time.UTC) }
+
+	for _, c := range []struct {
+		hour, minute int
+		want         Severity
+	}{
+		{0, 0, SeverityCritical}, {6, 59, SeverityCritical}, {7, 0, SeverityWarning}, {12, 0, SeverityWarning},
+		{22, 59, SeverityWarning}, {23, 0, SeverityCritical}, {23, 59, SeverityCritical},
+	} {
+		if got := f(at(c.hour, c.minute)); got != c.want {
+			t.Errorf("%02d:%02d: %v, want %v", c.hour, c.minute, got, c.want)
+		}
+	}
+}
+
+func TestByTimeOfDay_BoundariesWithMinutes(t *testing.T) {
+	f := ByTimeOfDay(SeverityWarning, 7, 30, 22, 45, SeverityCritical)
+
+	at := func(hour, minute int) time.Time { return time.Date(2026, 10, 16, hour, minute, 0, 0, time.UTC) }
+
+	for _, c := range []struct {
+		hour, minute int
+		want         Severity
+	}{
+		{7, 29, SeverityCritical}, {7, 30, SeverityWarning}, {22, 44, SeverityWarning}, {22, 45, SeverityCritical},
+	} {
+		if got := f(at(c.hour, c.minute)); got != c.want {
+			t.Errorf("%02d:%02d: %v, want %v", c.hour, c.minute, got, c.want)
+		}
+	}
+}
+
+func TestByTimeOfDay_AWindowThatCrossesMidnight(t *testing.T) {
+	f := ByTimeOfDay(SeverityCritical, 23, 0, 7, 0, SeverityWarning)
+
+	at := func(hour, minute int) time.Time { return time.Date(2026, 10, 16, hour, minute, 0, 0, time.UTC) }
+
+	for _, c := range []struct {
+		hour, minute int
+		want         Severity
+	}{
+		{22, 59, SeverityWarning}, {23, 0, SeverityCritical}, {23, 59, SeverityCritical}, {0, 0, SeverityCritical},
+		{6, 59, SeverityCritical}, {7, 0, SeverityWarning}, {12, 0, SeverityWarning},
+	} {
+		if got := f(at(c.hour, c.minute)); got != c.want {
+			t.Errorf("%02d:%02d: %v, want %v", c.hour, c.minute, got, c.want)
+		}
+	}
+}
+
+func TestByTimeOfDay_GoesByTheClockOnTheWallInTheZoneItIsGiven(t *testing.T) {
+	denver, err := time.LoadLocation("America/Denver")
+	if err != nil {
+		t.Skip("no time zone data")
+	}
+
+	f := ByTimeOfDay(SeverityWarning, 7, 0, 23, 0, SeverityCritical)
+
+	// 11:30pm Mountain time is 5:30am UTC the next day.
+	late := time.Date(2026, 10, 16, 23, 30, 0, 0, denver)
+
+	if got := f(late); got != SeverityCritical {
+		t.Errorf("11:30pm in Denver: %v", got)
+	}
+
+	if got := f(late.UTC()); got != SeverityCritical { // 05:30 UTC: also before 7
+		t.Errorf("the same moment in UTC: %v", got)
+	}
+
+	noon := time.Date(2026, 10, 16, 12, 0, 0, 0, denver)
+
+	if got := f(noon); got != SeverityWarning {
+		t.Errorf("noon in Denver: %v", got)
+	}
+}
+
+func TestByTimeOfDay_PanicsForAWindowThatIsNotOne(t *testing.T) {
+	for name, c := range map[string][4]int{
+		"hour too big":   {24, 0, 7, 0},
+		"minute too big": {7, 60, 9, 0},
+		"negative":       {-1, 0, 7, 0},
+		"empty":          {7, 0, 7, 0},
+		"to is invalid":  {7, 0, 8, 61},
+	} {
+		func() {
+			defer func() {
+				if recover() == nil {
+					t.Errorf("%s: didn't panic", name)
+				}
+			}()
+
+			ByTimeOfDay(SeverityWarning, c[0], c[1], c[2], c[3], SeverityCritical)
+		}()
 	}
 }
