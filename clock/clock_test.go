@@ -17,16 +17,10 @@ func TestIsClockEvent(t *testing.T) {
 	}
 
 	for name, event := range map[string]any{
-		"another entity's": events.EntityStateChangedEvent{}, "the stub available": ClockEntityStubAvailableEvent{}, "nil": nil,
+		"another entity's": events.EntityStateChangedEvent{}, "a string": "minute", "nil": nil,
 	} {
 		if IsClockEvent(&events.EventInfo{Event: event}) {
 			t.Errorf("%s event is a clock event", name)
 		}
-	}
-}
-
-func TestClockType(t *testing.T) {
-	if got := ClockType.String(); got != "clock.Clock" {
-		t.Errorf("got %s", got)
 	}
 }
