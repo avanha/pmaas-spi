@@ -61,7 +61,43 @@ type Automation interface {
 	// not, in which case it is run again each minute until it succeeds or its CatchUp has passed. It is called again
 	// after it fails, and it can be called again after the server was stopped part way through it, so it should
 	// leave things right however many times it is called: turn a switch on, don't toggle it.
+	//
+	// An automation that is due but is waiting for something, such as the room to cool down, returns NotReady. That
+	// is not a failure: it is asked again at the next minute, the same as for one that failed, but nothing is made of
+	// it, and if its CatchUp passes while it is still waiting that is not worth an alert either, since it never had
+	// anything to do.
 	Run() (string, error)
+}
+
+// ErrNotReady is what an error from NotReady matches with errors.Is.
+var ErrNotReady = errors.New("not ready")
+
+type notReadyError struct {
+	reason string
+}
+
+func (e *notReadyError) Error() string {
+	return "not ready: " + e.reason
+}
+
+func (e *notReadyError) Is(target error) bool {
+	return target == ErrNotReady
+}
+
+// NotReady is what Run returns when it is due but there is nothing to do yet, because whatever it is waiting for has not
+// happened. The reason says what that is, for the page: "78.1°F is not below 75.0°F".
+func NotReady(format string, args ...any) error {
+	return &notReadyError{reason: fmt.Sprintf(format, args...)}
+}
+
+// NotReadyReason is why an error from NotReady says it is not ready, and whether the error is one.
+func NotReadyReason(err error) (string, bool) {
+	var notReady *notReadyError
+	if errors.As(err, &notReady) {
+		return notReady.reason, true
+	}
+
+	return "", false
 }
 
 // Validate is whether an automation can be run: the things the server needs of it. The automations plugin checks
