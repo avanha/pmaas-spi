@@ -55,6 +55,9 @@ func (o OfflineAlert) Watch(source string, key string, name string) *OfflineWatc
 	return &OfflineWatch{policy: o, source: source, key: key, name: name}
 }
 
+// OfflineText words an offline alert: its title and its message, given when the device went offline and how long ago that is.
+type OfflineText func(since time.Time, offline time.Duration) (title string, message string)
+
 // OfflineWatch holds one device's offline alert. It remembers what it has raised, so that only a change is sent and it
 // can be checked as often as is wanted. Not safe to use from more than one goroutine.
 type OfflineWatch struct {
@@ -62,8 +65,20 @@ type OfflineWatch struct {
 	source   string
 	key      string
 	name     string
+	text     OfflineText
 	raised   bool
 	severity Severity
+}
+
+// WithText has the alert worded by text instead of in the usual way ("Offline: name", and how long it has been), for
+// something that is not quite a device going offline, say a host that is unreachable. It returns the watch, and does
+// nothing to a nil one.
+func (w *OfflineWatch) WithText(text OfflineText) *OfflineWatch {
+	if w != nil {
+		w.text = text
+	}
+
+	return w
 }
 
 // Check looks at the device at a time now, given whether it is connected and, if not, since when.
@@ -100,10 +115,14 @@ func (w *OfflineWatch) Check(broadcaster Broadcaster, connectivity environment.C
 			return nil
 		}
 
-		message := fmt.Sprintf("%s has been offline since %s, %s ago.",
+		title, message := "Offline: "+w.name, fmt.Sprintf("%s has been offline since %s, %s ago.",
 			w.name, offlineSince.Format("2006-01-02 3:04 PM"), offline.Round(time.Second))
 
-		if err := Raise(broadcaster, w.source, w.key, severity, "Offline: "+w.name, message); err != nil {
+		if w.text != nil {
+			title, message = w.text(offlineSince, offline)
+		}
+
+		if err := Raise(broadcaster, w.source, w.key, severity, title, message); err != nil {
 			return err
 		}
 

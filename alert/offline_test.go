@@ -129,3 +129,24 @@ func TestOfflineWatch_ARaiseThatFailsIsTriedAgain(t *testing.T) {
 		t.Fatalf("expected the retry to be sent: %+v", b.events)
 	}
 }
+
+func TestOfflineWatch_WithTextWordsTheAlert_AndANilWatchIgnoresIt(t *testing.T) {
+	b := &recordingBroadcaster{}
+	w := WhenOffline(0, nil).Watch("s", "k", "n").WithText(func(since time.Time, offline time.Duration) (string, string) {
+		return "Host down", "down since " + since.Format("15:04") + " for " + offline.String()
+	})
+
+	if err := w.Check(b, environment.ConnectivityOffline, epoch, epoch.Add(3*time.Minute)); err != nil {
+		t.Fatal(err)
+	}
+
+	got := b.events[0].(RaisedEvent)
+	if got.Title != "Host down" || got.Message != "down since 12:00 for 3m0s" {
+		t.Errorf("got %+v", got)
+	}
+
+	var none *OfflineWatch
+	if none.WithText(nil) != nil {
+		t.Error("a nil watch became something")
+	}
+}
