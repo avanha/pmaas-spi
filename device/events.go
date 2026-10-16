@@ -10,3 +10,12 @@ type DoorPositionChangedEvent struct {
 	NewPosition DoorPosition
 	OldPosition DoorPosition
 }
+
+// SwitchStateChangedEvent is broadcast when a switch's state changes to a different known state. The very
+// first report, which establishes the state rather than changing it, doesn't produce one - subscribe to
+// events.EntityStateChangedEvent for that.
+type SwitchStateChangedEvent struct {
+	events.EntityEvent
+	NewState SwitchState
+	OldState SwitchState
+}
