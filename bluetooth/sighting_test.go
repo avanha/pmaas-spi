@@ -213,3 +213,27 @@ func TestPublishSightingAndInterestEvent(t *testing.T) {
 		t.Error("predicate")
 	}
 }
+
+func TestSightingTracker_TheCompaniesKeptForADeviceAreBounded(t *testing.T) {
+	_, tracker := sightingsEvery(t, time.Hour)
+
+	a := heardOf("A4:C1:38:00:00:01", "x", -60)
+	a.ManufacturerData = map[uint16][]byte{}
+
+	for i := 0; i < 100; i++ {
+		a.ManufacturerData[uint16(0x0700+i)] = nil
+	}
+
+	got, told := tracker.Observe(a)
+	if !told || len(got.ManufacturerIDs) != maxCompanies {
+		t.Errorf("%v %d companies", told, len(got.ManufacturerIDs))
+	}
+}
+
+func TestCoalescer_SharesItsInterests(t *testing.T) {
+	c := NewCoalescer()
+
+	if c.Interests() == nil || c.Interests() != c.interests {
+		t.Error("not the interests it applies")
+	}
+}

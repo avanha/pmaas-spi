@@ -199,6 +199,11 @@ func NewCoalescerFor(interests *Interests) *Coalescer {
 	return &Coalescer{now: interests.now, interests: interests, last: make(map[string]forwarded)}
 }
 
+// Interests is what the Coalescer applies, for something else to share, such as a SightingTracker.
+func (c *Coalescer) Interests() *Interests {
+	return c.interests
+}
+
 // SetInterest takes in an owner's whole current interest. See Interests.Set.
 func (c *Coalescer) SetInterest(event InterestEvent) error {
 	return c.interests.Set(event)

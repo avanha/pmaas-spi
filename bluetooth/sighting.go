@@ -50,6 +50,10 @@ func PublishSighting(broadcaster Broadcaster, sighting SightingEvent) error {
 	return broadcaster.BroadcastEvent(sighting.Source, sighting)
 }
 
+// maxCompanies is how many manufacturer IDs are kept for a device. Some devices put a reading where the company ID goes, so
+// the number of different ones they show grows without end.
+const maxCompanies = 16
+
 // maxSeen is how many devices a SightingTracker remembers. Past it, the ones not heard from for longest are let go.
 const maxSeen = 4096
 
@@ -117,7 +121,9 @@ func (t *SightingTracker) Observe(a *AdvertisementEvent) (SightingEvent, bool) {
 	}
 
 	for id := range a.ManufacturerData {
-		d.manufacturer[id] = true
+		if len(d.manufacturer) < maxCompanies {
+			d.manufacturer[id] = true
+		}
 	}
 
 	if known && !learnedName && now.Sub(d.reported) < interval {
