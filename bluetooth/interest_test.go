@@ -208,3 +208,19 @@ func TestPayloadKey(t *testing.T) {
 		t.Error("raw data was not the key")
 	}
 }
+
+func TestMatchAny(t *testing.T) {
+	rules := []Rule{{Name: "sps", NamePrefix: "sps"}, {Name: "govee", NamePrefix: "GVH"}, {Name: "any-govee", ManufacturerID: ManufacturerOf(0xec88)}}
+
+	if got := MatchAny(rules, govee()); got == nil || got.Name != "govee" {
+		t.Errorf("the first that matches: %+v", got)
+	}
+
+	if got := MatchAny(rules, &AdvertisementEvent{Fields: Fields{LocalName: "other"}}); got != nil {
+		t.Errorf("matched %+v", got)
+	}
+
+	if MatchAny(nil, govee()) != nil {
+		t.Error("matched with no rules")
+	}
+}

@@ -132,6 +132,17 @@ func (r Rule) Matches(a *AdvertisementEvent) bool {
 	return true
 }
 
+// MatchAny is the first of the rules that wants the advertisement, or nil if none does.
+func MatchAny(rules []Rule, a *AdvertisementEvent) *Rule {
+	for i := range rules {
+		if rules[i].Matches(a) {
+			return &rules[i]
+		}
+	}
+
+	return nil
+}
+
 // InterestEvent is broadcast by a consumer to say what it wants to hear. It is the whole current set: it replaces
 // everything its Owner sent before, and an empty set withdraws the owner's interest.
 //
