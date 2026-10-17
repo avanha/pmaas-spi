@@ -51,6 +51,9 @@ type Source struct {
 	Heard     uint64
 	Forwarded uint64
 	Dropped   uint64
+
+	// Sighted is the devices told of in sightings, which are not counted in Forwarded.
+	Sighted uint64
 }
 
 // ISource is the entity a source registers. It only reports in v1. When something has to write to Bluetooth, the methods
@@ -126,6 +129,14 @@ func (s *SourceState) Forwarded() {
 	defer s.mu.Unlock()
 
 	s.data.Forwarded++
+}
+
+// Sighted notes a sighting that was broadcast.
+func (s *SourceState) Sighted() {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	s.data.Sighted++
 }
 
 // Dropped notes an advertisement that could not be decoded or broadcast.

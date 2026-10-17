@@ -23,12 +23,14 @@ func TestSourceState_TracksConnectivityScanningAndCounts(t *testing.T) {
 	s.Heard(at)
 	s.Heard(at.Add(time.Second))
 	s.Forwarded()
+	s.Sighted()
+	s.Sighted()
 	s.Dropped()
 	s.Dropped()
 
 	got := s.GetSourceData()
 	if got.Connectivity != environment.ConnectivityOnline || !got.OnlineSince.Equal(at) || got.Scanning != ScanActive ||
-		got.Heard != 2 || !got.LastHeard.Equal(at.Add(time.Second)) || got.Forwarded != 1 || got.Dropped != 2 {
+		got.Heard != 2 || !got.LastHeard.Equal(at.Add(time.Second)) || got.Forwarded != 1 || got.Sighted != 2 || got.Dropped != 2 {
 		t.Errorf("%+v", got)
 	}
 
