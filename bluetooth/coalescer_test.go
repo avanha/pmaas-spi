@@ -353,3 +353,50 @@ func TestCoalescer_AdmitAsMatchesTheRulesAgainstWhatIsKnownOfTheDeviceAndDedupes
 		t.Errorf("a different advertisement: %v", verdict)
 	}
 }
+
+func TestInterests_AreSharedByCoalescersThatEachDedupeTheirOwnStream(t *testing.T) {
+	interests := NewInterests()
+	a, b := NewCoalescerFor(interests), NewCoalescerFor(interests)
+
+	if a.Interested() || b.Interested() {
+		t.Fatal("interested before anybody said anything")
+	}
+
+	// Said once, heard by both.
+	if err := interests.Set(InterestEvent{Owner: "bluetooth", Rules: []Rule{sensors()}, ActiveScan: true}); err != nil {
+		t.Fatal(err)
+	}
+
+	if !a.Interested() || !b.Interested() || !a.ActiveScan() || len(b.Rules()) != 1 {
+		t.Error("the interest was not shared")
+	}
+
+	// The same thing heard in two places is news in each, and a repeat in the place it is repeated.
+	expect(t, a, advert("A4:C1:38:00:00:01", 1), Forward)
+	expect(t, b, advert("A4:C1:38:00:00:01", 1), Forward)
+	expect(t, a, advert("A4:C1:38:00:00:01", 1), Duplicate)
+	expect(t, b, advert("A4:C1:38:00:00:01", 1), Duplicate)
+
+	// Withdrawn once, withdrawn for both.
+	if err := a.SetInterest(InterestEvent{Owner: "bluetooth"}); err != nil {
+		t.Fatal(err)
+	}
+
+	expect(t, b, advert("A4:C1:38:00:00:01", 2), NotWanted)
+}
+
+func TestInterests_RefuseWhatIsNotValidAndKeepWhatWasThere(t *testing.T) {
+	interests := NewInterests()
+
+	if err := interests.Set(InterestEvent{Owner: "o", Rules: []Rule{sensors()}}); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := interests.Set(InterestEvent{Owner: "o", Rules: []Rule{{}}}); err == nil {
+		t.Error("accepted")
+	}
+
+	if len(interests.Rules()) != 1 {
+		t.Error("what was there did not stand")
+	}
+}
