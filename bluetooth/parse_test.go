@@ -245,3 +245,24 @@ func FuzzParseAdvertisingData(f *testing.F) {
 		}
 	})
 }
+
+func TestTrimAdvertisingData(t *testing.T) {
+	good := unhex(t, inkbirdSps)
+
+	for name, c := range map[string]struct {
+		in   []byte
+		want []byte
+	}{
+		"nothing":               {nil, nil},
+		"all of it":             {good, good},
+		"padded":                {append(bytes.Clone(good), make([]byte, 39)...), good},
+		"all padding":           {make([]byte, 10), []byte{}},
+		"a structure runs over": {unhex(t, "04097370730aff6607"), unhex(t, "0409737073")},
+		"only a length":         {[]byte{5}, []byte{}},
+	} {
+		got := TrimAdvertisingData(c.in)
+		if !bytes.Equal(got, c.want) || len(got) != len(c.want) {
+			t.Errorf("%s: %x, want %x", name, got, c.want)
+		}
+	}
+}

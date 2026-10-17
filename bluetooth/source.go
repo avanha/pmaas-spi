@@ -2,6 +2,7 @@ package bluetooth
 
 import (
 	"reflect"
+	"sync"
 	"time"
 
 	"github.com/avanha/pmaas-spi/environment"
@@ -60,3 +61,77 @@ type ISource interface {
 
 // ISourceType is the entity type to register a source under.
 var ISourceType = reflect.TypeFor[ISource]()
+
+// SourceState is the entity a source registers, kept up to date by whatever hears the advertisements and read by anything
+// else. It is safe to use from more than one goroutine, and the stub a source's entity registration hands out can be the
+// SourceState itself.
+type SourceState struct {
+	mu   sync.Mutex
+	data Source
+}
+
+var _ ISource = (*SourceState)(nil)
+
+// NewSourceState makes the state of a source that is not yet known to be connected to anything.
+func NewSourceState(name string, kind string) *SourceState {
+	return &SourceState{data: Source{Name: name, Kind: kind}}
+}
+
+func (s *SourceState) GetSourceData() Source {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	return s.data
+}
+
+// SetConnectivity notes whether the source's transport is up. The time it has been so is only moved when that changes.
+func (s *SourceState) SetConnectivity(connectivity environment.Connectivity, at time.Time) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	if s.data.Connectivity == connectivity {
+		return
+	}
+
+	s.data.Connectivity = connectivity
+
+	switch connectivity {
+	case environment.ConnectivityOnline:
+		s.data.OnlineSince = at
+	case environment.ConnectivityOffline:
+		s.data.OfflineSince = at
+	}
+}
+
+// SetScanning notes what the radio is doing.
+func (s *SourceState) SetScanning(mode ScanMode) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	s.data.Scanning = mode
+}
+
+// Heard notes an advertisement, wanted or not.
+func (s *SourceState) Heard(at time.Time) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	s.data.Heard++
+	s.data.LastHeard = at
+}
+
+// Forwarded notes an advertisement that was broadcast.
+func (s *SourceState) Forwarded() {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	s.data.Forwarded++
+}
+
+// Dropped notes an advertisement that could not be decoded or broadcast.
+func (s *SourceState) Dropped() {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	s.data.Dropped++
+}

@@ -29,6 +29,23 @@ const (
 	adManufacturer   = 0xff
 )
 
+// TrimAdvertisingData is the advertising data without the padding a proxy adds to fill a fixed size: everything up to the
+// first structure of zero length, or up to the last whole structure if one runs past the end. It does not copy.
+func TrimAdvertisingData(raw []byte) []byte {
+	i := 0
+
+	for i < len(raw) && raw[i] != 0 {
+		next := i + 1 + int(raw[i])
+		if next > len(raw) {
+			break
+		}
+
+		i = next
+	}
+
+	return raw[:i]
+}
+
 // ParseAdvertisingData decodes the advertising data of one advertisement, as a proxy sends it: structures of a length byte,
 // a type byte and the rest, one after another. A length of zero ends the data (a proxy pads it to a fixed size).
 //
