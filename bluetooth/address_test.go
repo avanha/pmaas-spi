@@ -55,3 +55,31 @@ func TestAddressType_String(t *testing.T) {
 		t.Error("names")
 	}
 }
+
+func TestIsTemporaryAddress(t *testing.T) {
+	for _, c := range []struct {
+		address string
+		kind    AddressType
+		want    bool
+		why     string
+	}{
+		{"A4:C1:38:CC:E2:F0", AddressPublic, false, "a public address, a Govee"},
+		{"4C:00:00:00:00:00", AddressPublic, false, "a public address whose top bits would read as private"},
+		{"C3:00:00:00:00:01", AddressRandom, false, "static random: 11"},
+		{"FF:FF:FF:FF:FF:FF", AddressRandom, false, "static random: 11"},
+		{"F3:8C:41:E1:0B:E1", AddressRandom, false, "static random seen on a proxy"},
+		{"44:DC:FA:B6:5B:00", AddressRandom, true, "resolvable private: 01, an Apple device"},
+		{"7F:7E:AD:F5:7E:EC", AddressRandom, true, "resolvable private: 01"},
+		{"4B:41:7B:59:82:FA", AddressRandom, true, "resolvable private: 01"},
+		{"0F:51:C0:6F:70:B3", AddressRandom, true, "non-resolvable private: 00"},
+		{"25:71:9C:AE:14:6D", AddressRandom, true, "non-resolvable private: 00"},
+		{"BF:00:00:00:00:00", AddressRandom, true, "10 is not a valid random address, and not a static one"},
+		{"44:DC:FA:B6:5B:00", AddressUnknown, false, "a type not known is not said to be temporary"},
+		{"nonsense", AddressRandom, false, "not an address"},
+		{"c3:00:00:00:00:01", AddressRandom, false, "lower case is the same address"},
+	} {
+		if got := IsTemporaryAddress(c.address, c.kind); got != c.want {
+			t.Errorf("%s %v (%s): %v, want %v", c.address, c.kind, c.why, got, c.want)
+		}
+	}
+}

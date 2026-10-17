@@ -51,6 +51,7 @@ type Interests struct {
 type ownerInterest struct {
 	rules      []Rule
 	activeScan bool
+	sightings  time.Duration
 	heard      time.Time
 }
 
@@ -69,7 +70,7 @@ func (i *Interests) Set(event InterestEvent) error {
 	i.mu.Lock()
 	defer i.mu.Unlock()
 
-	if len(event.Rules) == 0 {
+	if len(event.Rules) == 0 && event.Sightings == 0 {
 		delete(i.owners, event.Owner)
 
 		return nil
@@ -78,18 +79,36 @@ func (i *Interests) Set(event InterestEvent) error {
 	i.owners[event.Owner] = ownerInterest{
 		rules:      append([]Rule(nil), event.Rules...),
 		activeScan: event.ActiveScan,
+		sightings:  event.Sightings,
 		heard:      i.now(),
 	}
 
 	return nil
 }
 
-// Interested is whether anybody currently wants anything.
+// Interested is whether anybody currently wants anything: advertisements, or sightings of the devices around.
 func (i *Interests) Interested() bool {
 	i.mu.Lock()
 	defer i.mu.Unlock()
 
 	return len(i.live()) > 0
+}
+
+// SightingInterval is how often anybody wants to be told about a device not otherwise wanted: the shortest of what the
+// owners ask, or zero if none does.
+func (i *Interests) SightingInterval() time.Duration {
+	i.mu.Lock()
+	defer i.mu.Unlock()
+
+	var shortest time.Duration
+
+	for _, owner := range i.live() {
+		if owner.sightings > 0 && (shortest == 0 || owner.sightings < shortest) {
+			shortest = owner.sightings
+		}
+	}
+
+	return shortest
 }
 
 // ActiveScan is whether anybody currently wants scan responses.

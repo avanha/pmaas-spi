@@ -159,6 +159,11 @@ type InterestEvent struct {
 	// ActiveScan is whether any rule needs scan responses, which carry names for some devices. A source should scan
 	// actively while any owner wants it.
 	ActiveScan bool
+
+	// Sightings, if it is more than zero, asks to be told about every device that is heard and not otherwise wanted, in a
+	// SightingEvent at most that often for each device, and at once when its name is first learned. It is how a list of
+	// the devices around can be kept, to find the address of one to configure. Zero is not at all.
+	Sightings time.Duration
 }
 
 // InterestTTL is how long an owner's interest lasts without being refreshed.
@@ -170,6 +175,10 @@ func (e InterestEvent) Validate() error {
 		return errors.New("an interest needs an owner")
 	}
 
+	if e.Sightings < 0 {
+		return errors.New("the time between sightings can't be negative")
+	}
+
 	for i, rule := range e.Rules {
 		if err := rule.Validate(); err != nil {
 			return fmt.Errorf("rule %d (%q): %w", i, rule.Name, err)
@@ -179,14 +188,18 @@ func (e InterestEvent) Validate() error {
 	return nil
 }
 
-// PublishInterest broadcasts the owner's whole current interest. The owner stands in for the entity ID.
+// PublishInterest broadcasts the owner's whole current interest, without sightings. The owner stands in for the entity ID.
 func PublishInterest(broadcaster Broadcaster, owner string, rules []Rule, activeScan bool) error {
-	event := InterestEvent{Owner: owner, Rules: rules, ActiveScan: activeScan}
+	return PublishInterestEvent(broadcaster, InterestEvent{Owner: owner, Rules: rules, ActiveScan: activeScan})
+}
+
+// PublishInterestEvent broadcasts the interest, which is the owner's whole current one. The owner stands in for the entity ID.
+func PublishInterestEvent(broadcaster Broadcaster, event InterestEvent) error {
 	if err := event.Validate(); err != nil {
 		return err
 	}
 
-	return broadcaster.BroadcastEvent(owner, event)
+	return broadcaster.BroadcastEvent(event.Owner, event)
 }
 
 // InterestPredicate is an events.EventPredicate matching InterestEvents, for a source.

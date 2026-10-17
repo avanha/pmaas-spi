@@ -148,6 +148,37 @@ func AdvertisementPredicate(eventInfo *events.EventInfo) bool {
 	return ok
 }
 
+// IsTemporaryAddress is whether the address is one the device is going to change. A public address, and a random one that is
+// static (its top two bits are 11), last for as long as the device does. A random address that is not static is private: its top
+// bits are 01 for one that can be resolved with a key, 00 for one that can't, and phones, watches and trackers make a new one every
+// quarter of an hour or so. A device with such an address is not worth remembering for long, or configuring by it. An address of
+// an unknown type, or that is not an address, is not said to be temporary.
+func IsTemporaryAddress(address string, addressType AddressType) bool {
+	if addressType != AddressRandom {
+		return false
+	}
+
+	normal, ok := NormalizeAddress(address)
+	if !ok {
+		return false
+	}
+
+	// The first byte is the most significant.
+	var first byte
+
+	for _, c := range normal[:2] {
+		first <<= 4
+
+		if c >= 'A' {
+			first |= byte(c-'A') + 10
+		} else {
+			first |= byte(c - '0')
+		}
+	}
+
+	return first&0xC0 != 0xC0
+}
+
 // FormatAddress is a 48-bit address, as proxies send it (most significant byte first in the number), in the form
 // AdvertisementEvent uses.
 func FormatAddress(address uint64) string {
