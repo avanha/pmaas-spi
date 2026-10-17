@@ -151,10 +151,17 @@ func (c *Coalescer) live() []ownerInterest {
 
 // Admit decides what to do about an advertisement. The rule that matched is returned for a source to count by, nil if none.
 func (c *Coalescer) Admit(a *AdvertisementEvent) (Verdict, *Rule) {
+	return c.AdmitAs(a, a)
+}
+
+// AdmitAs is Admit for a source that knows more about the device than one advertisement says, as BlueZ does: the rules are
+// matched against everything known about the device (view), while what is forwarded, and what counts as a repeat, is the
+// advertisement.
+func (c *Coalescer) AdmitAs(view *AdvertisementEvent, a *AdvertisementEvent) (Verdict, *Rule) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
-	rule := c.choose(a)
+	rule := c.choose(view)
 	if rule == nil {
 		return NotWanted, nil
 	}

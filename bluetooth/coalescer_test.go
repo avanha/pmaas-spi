@@ -327,3 +327,29 @@ func TestVerdictAndLatencyNames(t *testing.T) {
 		t.Error("names")
 	}
 }
+
+func TestCoalescer_AdmitAsMatchesTheRulesAgainstWhatIsKnownOfTheDeviceAndDedupesTheAdvertisement(t *testing.T) {
+	c := interested(t, "bluetooth", Rule{Name: "named", NamePrefix: "GVH"})
+
+	// The advertisement alone says nothing the rule could match; the device is known to have the name.
+	view := &AdvertisementEvent{Address: "A4:C1:38:00:00:01", Fields: Fields{LocalName: "GVH5075_0001"}}
+	data := &AdvertisementEvent{Address: "A4:C1:38:00:00:01", Fields: Fields{ManufacturerData: map[uint16][]byte{0xec88: {1}}}}
+
+	if verdict, rule := c.Admit(data); verdict != NotWanted || rule != nil {
+		t.Errorf("without the view: %v %+v", verdict, rule)
+	}
+
+	if verdict, rule := c.AdmitAs(view, data); verdict != Forward || rule == nil || rule.Name != "named" {
+		t.Errorf("with the view: %v %+v", verdict, rule)
+	}
+
+	// What was remembered is the advertisement, not the view.
+	if verdict, _ := c.AdmitAs(view, data); verdict != Duplicate {
+		t.Errorf("a repeat of the advertisement: %v", verdict)
+	}
+
+	other := &AdvertisementEvent{Address: "A4:C1:38:00:00:01", Fields: Fields{ManufacturerData: map[uint16][]byte{0xec88: {2}}}}
+	if verdict, _ := c.AdmitAs(view, other); verdict != Forward {
+		t.Errorf("a different advertisement: %v", verdict)
+	}
+}
