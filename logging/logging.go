@@ -70,7 +70,7 @@ func For(container any, names ...string) *slog.Logger {
 		return p.Logger(names...)
 	}
 
-	return slog.Default().With("component", "plugin."+strings.Join(names, "."))
+	return slog.Default().With("component", strings.Join(append([]string{"plugin"}, names...), "."))
 }
 
 // ControllerOf returns the Controller of a container, or nil if it does not have one.
