@@ -72,3 +72,19 @@ func TestSourceState_IsSafeToUseFromSeveralGoroutines(t *testing.T) {
 		t.Errorf("%+v", got)
 	}
 }
+
+func TestSourceState_CountsBatchesAndNotesWhenTheLastArrived(t *testing.T) {
+	s := NewSourceState("proxy", "esphome-proxy")
+
+	if got := s.GetSourceData(); got.Batches != 0 || !got.LastBatch.IsZero() {
+		t.Fatalf("before: %+v", got)
+	}
+
+	first := time.Date(2026, 10, 18, 8, 0, 0, 0, time.UTC)
+	s.Batch(first)
+	s.Batch(first.Add(time.Second))
+
+	if got := s.GetSourceData(); got.Batches != 2 || !got.LastBatch.Equal(first.Add(time.Second)) {
+		t.Errorf("after: %+v", got)
+	}
+}

@@ -54,6 +54,12 @@ type Source struct {
 
 	// Sighted is the devices told of in sightings, which are not counted in Forwarded.
 	Sighted uint64
+
+	// Batches is how many messages of advertisements the source has taken in, and LastBatch when the last arrived. A source
+	// whose transport sends them in groups (a proxy) counts each group; one that hears them one at a time (BlueZ) counts each.
+	// A source that is connected and scanning but whose LastBatch is minutes old has stopped hearing, whatever its connection says.
+	Batches   uint64
+	LastBatch time.Time
 }
 
 // ISource is the entity a source registers. It only reports in v1. When something has to write to Bluetooth, the methods
@@ -112,6 +118,15 @@ func (s *SourceState) SetScanning(mode ScanMode) {
 	defer s.mu.Unlock()
 
 	s.data.Scanning = mode
+}
+
+// Batch notes that a message of advertisements arrived, however many it held.
+func (s *SourceState) Batch(at time.Time) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	s.data.Batches++
+	s.data.LastBatch = at
 }
 
 // Heard notes an advertisement, wanted or not.
