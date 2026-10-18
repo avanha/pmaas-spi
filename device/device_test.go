@@ -46,3 +46,22 @@ func TestSwitchState_OnlyOnAndOffCanBeAskedFor(t *testing.T) {
 		}
 	}
 }
+
+func TestButton(t *testing.T) {
+	for press, want := range map[ButtonPress]string{
+		PressUnknown: "unknown", PressSingle: "single", PressDouble: "double", PressTriple: "triple", PressLong: "long", ButtonPress(99): "unknown",
+	} {
+		if press.String() != want {
+			t.Errorf("%d: %q, want %q", press, press.String(), want)
+		}
+	}
+
+	if IButtonType.String() != "device.IButton" {
+		t.Errorf("type %s", IButtonType)
+	}
+
+	var zero Button
+	if zero.Presses != 0 || zero.LastPress != PressUnknown || !zero.LastPressTime.IsZero() {
+		t.Error("a new button looks pressed")
+	}
+}
