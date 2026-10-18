@@ -35,6 +35,12 @@ type RenderListOptions struct {
 	TitleSuffix string
 
 	Header any
+
+	// Masonry asks for the items to be laid out so that each is as tall as its content, rather than every item in a row being as
+	// tall as the tallest, which wastes space on a page whose items vary a lot in height (a host with many interfaces next to one
+	// with none). It fills left to right and then drops each item into the shortest column. It is a request: a renderer that cannot
+	// do it, or a browser that cannot, lays the items out as it would otherwise, so it is safe to ask for.
+	Masonry bool
 }
 
 type HttpHandlerOptions struct {
