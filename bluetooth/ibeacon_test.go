@@ -112,3 +112,40 @@ func TestIBeaconMatch_WithMajorDoesNotChangeTheMatchItWasMadeFrom(t *testing.T) 
 		t.Error("the original was changed")
 	}
 }
+
+func TestMatchAnyIBeacon_MatchesOnTheNumbersAloneAndSaysHowSpecificItIs(t *testing.T) {
+	frame := IBeacon{UUID: "7777772e-6b6b-6d63-6e2e-636f6d000006", Major: 1, Minor: 1}
+
+	for name, c := range map[string]struct {
+		match IBeaconMatch
+		want  bool
+		score int
+	}{
+		"any":                      {MatchAnyIBeacon(), true, 0},
+		"a major":                  {MatchAnyIBeacon().WithMajor(1), true, 1},
+		"another major":            {MatchAnyIBeacon().WithMajor(2), false, 1},
+		"a minor":                  {MatchAnyIBeacon().WithMinor(1), true, 1},
+		"a major of zero":          {MatchAnyIBeacon().WithMajor(0), false, 1},
+		"both numbers":             {MatchAnyIBeacon().WithMajor(1).WithMinor(1), true, 2},
+		"a uuid":                   {MatchIBeacon(frame.UUID), true, 1},
+		"a uuid and a major":       {MatchIBeacon(frame.UUID).WithMajor(1), true, 2},
+		"a uuid and another major": {MatchIBeacon(frame.UUID).WithMajor(2), false, 2},
+		"all three":                {MatchIBeacon(frame.UUID).WithMajor(1).WithMinor(1), true, 3},
+	} {
+		if got := c.match.Matches(frame); got != c.want {
+			t.Errorf("%s: %v, want %v", name, got, c.want)
+		}
+
+		if got := c.match.Specificity(); got != c.score {
+			t.Errorf("%s: specificity %d, want %d", name, got, c.score)
+		}
+	}
+
+	if !MatchAnyIBeacon().IsEmpty() || MatchAnyIBeacon().WithMajor(0).IsEmpty() || MatchIBeacon(frame.UUID).IsEmpty() {
+		t.Error("IsEmpty")
+	}
+
+	if got := MatchAnyIBeacon().WithMajor(2).String(); got != "any UUID major 2" {
+		t.Errorf("string %q", got)
+	}
+}

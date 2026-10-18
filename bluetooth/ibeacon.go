@@ -35,10 +35,42 @@ func ParseIBeacon(manufacturerData map[uint16][]byte) (IBeacon, bool) {
 	}, true
 }
 
-// IBeaconMatch says which iBeacon frames it is: those with the UUID, and, if they are set, the major and the minor.
+// IBeaconMatch says which iBeacon frames it is: those with the UUID, if it is set, and the major and the minor, if they are
+// set. A match with none of them set would be every iBeacon, and is not a useful thing to ask for.
 type IBeaconMatch struct {
 	UUID         string
 	Major, Minor *uint16
+}
+
+// MatchAnyIBeacon is a match of iBeacon frames of any UUID, to be narrowed with WithMajor and WithMinor. It is for a beacon
+// whose frames are told apart by the numbers rather than the UUID, as the slots of a BlueCharm can be.
+func MatchAnyIBeacon() IBeaconMatch {
+	return IBeaconMatch{}
+}
+
+// IsEmpty is whether nothing has been said about which frames: it would match every one.
+func (m IBeaconMatch) IsEmpty() bool {
+	return m.UUID == "" && m.Major == nil && m.Minor == nil
+}
+
+// Specificity is how many of the UUID, the major and the minor the match requires, for choosing among matches that all
+// fit a frame: the more specific one is the better fit.
+func (m IBeaconMatch) Specificity() int {
+	score := 0
+
+	if m.UUID != "" {
+		score++
+	}
+
+	if m.Major != nil {
+		score++
+	}
+
+	if m.Minor != nil {
+		score++
+	}
+
+	return score
 }
 
 // MatchIBeacon matches the frames with the UUID, which may be in any form NormalizeUUID understands. It panics if it is not a
@@ -68,11 +100,15 @@ func (m IBeaconMatch) WithMinor(minor uint16) IBeaconMatch {
 
 // Matches is whether the frame is one this matches.
 func (m IBeaconMatch) Matches(frame IBeacon) bool {
-	return frame.UUID == m.UUID && (m.Major == nil || *m.Major == frame.Major) && (m.Minor == nil || *m.Minor == frame.Minor)
+	return (m.UUID == "" || frame.UUID == m.UUID) &&
+		(m.Major == nil || *m.Major == frame.Major) && (m.Minor == nil || *m.Minor == frame.Minor)
 }
 
 func (m IBeaconMatch) String() string {
 	text := m.UUID
+	if text == "" {
+		text = "any UUID"
+	}
 
 	if m.Major != nil {
 		text += fmt.Sprintf(" major %d", *m.Major)
