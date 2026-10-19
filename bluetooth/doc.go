@@ -14,6 +14,9 @@
 //     whole current set on start, when it changes, and every minute; see InterestEvent.
 //   - Coalescer: what a source uses to apply the interest, so that every source treats an advertisement the same way.
 //   - ISource and Source: the entity a source registers.
+//   - DeviceModel, ConfiguredDevice and Device: what a consumer knows a kind of device by (Kind, Rules, Identify) and how a device
+//     decodes its advertisements into a Result. A model lives in its own module (pmaas-bluetooth-devices has the common ones) and
+//     the bluetooth plugin runs it. The bttest package tests one with advertisements captured as hex.
 //
 // Nothing here writes to Bluetooth. If something has to, the capability belongs on the source's entity as methods, as it
 // does for a switch, and not on the event bus: a command has a target and an answer.
