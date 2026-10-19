@@ -3,30 +3,31 @@ package format
 import (
 	"fmt"
 	"math"
+	"strings"
 )
 
-// The measurements a page shows are all said the same way: one decimal place. The sensors are not better than a tenth of a degree
-// or a tenth of a percent, and a number with more only looks as if they were. These take any number (a float32 reading, a float64
-// from JSON, an int) so a template can use them whatever a plugin's data has, and say nothing for what is not a number.
+// The measurements a page shows are all said the same way: a temperature to two decimal places and a humidity to one. A number with
+// more only looks more exact than a sensor is. These take any number (a float32 reading, a float64 from JSON, an int) so a template
+// can use them whatever a plugin's data has, and say nothing for what is not a number.
 
-// Temperature is a temperature in Celsius as shown, to a tenth: "21.1".
+// Temperature is a temperature in Celsius as shown, to a hundredth: "21.10".
 func Temperature(v any) string {
 	f, ok := number(v)
 	if !ok {
 		return ""
 	}
 
-	return tenths(f)
+	return fixed(f, 2)
 }
 
-// Fahrenheit is a temperature given in Celsius, shown in Fahrenheit to a tenth: Fahrenheit(21.1) is "70.0".
+// Fahrenheit is a temperature given in Celsius, shown in Fahrenheit to a hundredth: Fahrenheit(21.1) is "69.98".
 func Fahrenheit(v any) string {
 	f, ok := number(v)
 	if !ok {
 		return ""
 	}
 
-	return tenths(f*9/5 + 32)
+	return fixed(f*9/5+32, 2)
 }
 
 // Humidity is a relative humidity as shown, to a tenth: "36.6".
@@ -36,18 +37,18 @@ func Humidity(v any) string {
 		return ""
 	}
 
-	return tenths(f)
+	return fixed(f, 1)
 }
 
-// tenths is the number to one decimal place, never as "-0.0".
-func tenths(f float64) string {
+// fixed is the number to that many decimal places, never as "-0.0".
+func fixed(f float64, places int) string {
 	if math.IsNaN(f) || math.IsInf(f, 0) {
 		return ""
 	}
 
-	text := fmt.Sprintf("%.1f", f)
-	if text == "-0.0" {
-		return "0.0"
+	text := fmt.Sprintf("%.*f", places, f)
+	if strings.Trim(text, "-0.") == "" {
+		return strings.TrimPrefix(text, "-")
 	}
 
 	return text

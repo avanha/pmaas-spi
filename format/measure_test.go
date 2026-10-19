@@ -10,15 +10,15 @@ func TestTemperature(t *testing.T) {
 		in   any
 		want string
 	}{
-		"float32":          {float32(21.1), "21.1"},
-		"too many places":  {float32(21.123456), "21.1"},
-		"float64":          {21.149999999, "21.1"},
-		"rounds":           {21.16, "21.2"},
-		"whole":            {float32(22), "22.0"},
-		"negative":         {-5.04, "-5.0"},
-		"negative zero":    {-0.04, "0.0"},
-		"an int":           {22, "22.0"},
-		"a float32 sum":    {float32(18.94) + float32(0.02), "19.0"},
+		"float32":          {float32(21.1), "21.10"},
+		"too many places":  {float32(21.123456), "21.12"},
+		"float64":          {21.149999999, "21.15"},
+		"rounds":           {21.166, "21.17"},
+		"whole":            {float32(22), "22.00"},
+		"negative":         {-5.04, "-5.04"},
+		"negative zero":    {-0.004, "0.00"},
+		"an int":           {22, "22.00"},
+		"inkbird":          {float32(18.94), "18.94"},
 		"not a number":     {"warm", ""},
 		"nothing":          {nil, ""},
 		"not a number yet": {math.NaN(), ""},
@@ -31,7 +31,7 @@ func TestTemperature(t *testing.T) {
 }
 
 func TestFahrenheit(t *testing.T) {
-	for in, want := range map[float32]string{0: "32.0", 100: "212.0", -40: "-40.0", 20: "68.0", 37: "98.6", 21.1: "70.0", 5.36: "41.6"} {
+	for in, want := range map[float32]string{0: "32.00", 100: "212.00", -40: "-40.00", 20: "68.00", 37: "98.60", 21.1: "69.98", 5.36: "41.65"} {
 		if got := Fahrenheit(in); got != want {
 			t.Errorf("Fahrenheit(%v) = %q, want %q", in, got, want)
 		}
