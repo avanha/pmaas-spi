@@ -25,6 +25,11 @@ type EntityView struct {
 	// fan). Empty leaves it to the page, which goes by the entity's registered type.
 	Category string
 
+	// Covers are the entities whose own cards this one makes redundant: a plugin that shows another plugin's entity in a fuller card
+	// (the environment plugin's thermometers) names the entity it shows, so a page that lists them all draws the fuller card and not
+	// both.
+	Covers []string
+
 	// Value is what the renderer is given.
 	Value any
 }
