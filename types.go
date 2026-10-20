@@ -20,6 +20,11 @@ type EntityView struct {
 	// entities of their own, and a page that lists them all draws the card once. Empty means the view is the entity's alone.
 	Key string
 
+	// Category is what kind of thing the card is, for a page that sorts entities by kind: one of the group package's Category
+	// constants, or a name of the plugin's own. A card is one kind even if it holds several (a device with a fan and a light is a
+	// fan). Empty leaves it to the page, which goes by the entity's registered type.
+	Category string
+
 	// Value is what the renderer is given.
 	Value any
 }

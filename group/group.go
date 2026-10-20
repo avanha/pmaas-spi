@@ -32,5 +32,23 @@ type IGroup interface {
 	Descendants() []string
 }
 
+// The kinds a card can be (see spi.EntityView.Category), in the order a page lists them unless it is told otherwise. A plugin may use a
+// name of its own.
+const (
+	CategoryFans         = "Fans"
+	CategoryLights       = "Lights"
+	CategorySwitches     = "Switches"
+	CategoryThermometers = "Thermometers"
+	CategorySensors      = "Sensors"
+	CategoryPower        = "Power"
+	CategoryButtons      = "Buttons"
+	CategoryOther        = "Other"
+)
+
+// Categories are the kinds above, in their order.
+var Categories = []string{
+	CategoryFans, CategoryLights, CategorySwitches, CategoryThermometers, CategorySensors, CategoryPower, CategoryButtons, CategoryOther,
+}
+
 // IGroupType is the type groups are registered with.
 var IGroupType = reflect.TypeFor[IGroup]()
