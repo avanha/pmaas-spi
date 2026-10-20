@@ -38,9 +38,9 @@ type StubHolder[T any] struct {
 
 var _ entity.Ref = (*StubHolder[any])(nil)
 
-// EntityId is the id the server gave the entity, or false while there is no stub: it makes a StubHolder, and so any handle that
+// RegisteredId is the id the server gave the entity, or false while there is no stub: it makes a StubHolder, and so any handle that
 // has one, an entity.Ref, which is how an assembly names the entity to the groups plugin.
-func (h *StubHolder[T]) EntityId() (string, bool) {
+func (h *StubHolder[T]) RegisteredId() (string, bool) {
 	h.mu.Lock()
 	defer h.mu.Unlock()
 

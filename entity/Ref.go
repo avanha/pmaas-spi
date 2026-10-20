@@ -4,6 +4,7 @@ package entity
 // registers it, so what the assembly holds is a handle (what a plugin's config gave back). A handle that implements Ref can say which
 // entity it is once the entity is registered.
 type Ref interface {
-	// EntityId is the id of the entity, or false while it is not registered. Safe to call from any goroutine.
-	EntityId() (string, bool)
+	// RegisteredId is the id of the entity, or false while it is not registered. Safe to call from any goroutine. (It is not called
+	// EntityId because a handle may already have a method of that name that says something else.)
+	RegisteredId() (string, bool)
 }

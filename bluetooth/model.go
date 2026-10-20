@@ -8,6 +8,7 @@ import (
 	"github.com/avanha/pmaas-spi"
 	"github.com/avanha/pmaas-spi/common"
 	"github.com/avanha/pmaas-spi/device"
+	"github.com/avanha/pmaas-spi/entity"
 )
 
 // Kind is what a device is, which decides the entity the bluetooth plugin registers for it.
@@ -153,6 +154,18 @@ func (h *ButtonHandle) Bind(container spi.IPMAASContainer, id string, event comm
 
 	return h.stub.Provide(container, event)
 }
+
+// RegisteredId is the id of the button entity, or false while there is none, which makes the button an entity.Ref: the assembly names it
+// to the groups plugin with it. (EntityId says the same, for what wants an empty string.)
+func (h *ButtonHandle) RegisteredId() (string, bool) {
+	if id := h.entityId.Load(); id != nil && *id != "" {
+		return *id, true
+	}
+
+	return "", false
+}
+
+var _ entity.Ref = (*ButtonHandle)(nil)
 
 // Unbind is for the plugin.
 func (h *ButtonHandle) Unbind() {

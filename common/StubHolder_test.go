@@ -192,7 +192,7 @@ func TestStubHolder_SafeToUseFromManyGoroutines(t *testing.T) {
 func TestStubHolder_KnowsTheEntitysIdWhileItHasAStub(t *testing.T) {
 	var h common.StubHolder[string]
 
-	if id, ok := h.EntityId(); ok || id != "" {
+	if id, ok := h.RegisteredId(); ok || id != "" {
 		t.Errorf("%q %v", id, ok)
 	}
 
@@ -200,13 +200,13 @@ func TestStubHolder_KnowsTheEntitysIdWhileItHasAStub(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if id, ok := h.EntityId(); !ok || id != "plugin_fan" {
+	if id, ok := h.RegisteredId(); !ok || id != "plugin_fan" {
 		t.Errorf("%q %v", id, ok)
 	}
 
 	h.Withdraw()
 
-	if id, ok := h.EntityId(); ok || id != "" {
+	if id, ok := h.RegisteredId(); ok || id != "" {
 		t.Errorf("still known after the stub was withdrawn: %q %v", id, ok)
 	}
 }
