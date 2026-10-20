@@ -188,3 +188,25 @@ func TestStubHolder_SafeToUseFromManyGoroutines(t *testing.T) {
 
 	wg.Wait()
 }
+
+func TestStubHolder_KnowsTheEntitysIdWhileItHasAStub(t *testing.T) {
+	var h common.StubHolder[string]
+
+	if id, ok := h.EntityId(); ok || id != "" {
+		t.Errorf("%q %v", id, ok)
+	}
+
+	if err := h.Provide(nil, common.StubAvailableEvent[string]{EntityEvent: events.EntityEvent{Id: "plugin_fan"}, EntityStub: "stub"}); err != nil {
+		t.Fatal(err)
+	}
+
+	if id, ok := h.EntityId(); !ok || id != "plugin_fan" {
+		t.Errorf("%q %v", id, ok)
+	}
+
+	h.Withdraw()
+
+	if id, ok := h.EntityId(); ok || id != "" {
+		t.Errorf("still known after the stub was withdrawn: %q %v", id, ok)
+	}
+}

@@ -7,6 +7,7 @@ import (
 	"sync"
 
 	"github.com/avanha/pmaas-spi"
+	"github.com/avanha/pmaas-spi/entity"
 	"github.com/avanha/pmaas-spi/events"
 )
 
@@ -31,7 +32,19 @@ type StubHolder[T any] struct {
 	mu        sync.Mutex
 	stub      T
 	available bool
+	entityId  string
 	listeners []func(event StubAvailableEvent[T])
+}
+
+var _ entity.Ref = (*StubHolder[any])(nil)
+
+// EntityId is the id the server gave the entity, or false while there is no stub: it makes a StubHolder, and so any handle that
+// has one, an entity.Ref, which is how an assembly names the entity to the groups plugin.
+func (h *StubHolder[T]) EntityId() (string, bool) {
+	h.mu.Lock()
+	defer h.mu.Unlock()
+
+	return h.entityId, h.available && h.entityId != ""
 }
 
 // AddOnStubAvailableListener adds a function to be called when the stub becomes available, on the server's
@@ -64,6 +77,7 @@ func (h *StubHolder[T]) Provide(container spi.IPMAASContainer, event StubAvailab
 	h.mu.Lock()
 	h.stub = event.EntityStub
 	h.available = true
+	h.entityId = event.Id
 	listeners := slices.Clone(h.listeners)
 	h.mu.Unlock()
 
@@ -92,4 +106,5 @@ func (h *StubHolder[T]) Withdraw() {
 	var zero T
 	h.stub = zero
 	h.available = false
+	h.entityId = ""
 }
