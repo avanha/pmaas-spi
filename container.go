@@ -60,6 +60,11 @@ type HttpHandlerOptions struct {
 
 	// MenuIcon is an optional icon identifier for this route's menu entry.
 	MenuIcon string
+
+	// MenuPriority is where the plugin's menu entry goes, on its list route: the higher the number, the earlier, and entries with the
+	// same priority are in alphabetical order. The default, 0, is for everything else. Entries above 0 come first, and a rule is drawn
+	// between them and the rest. The assembly can replace it for a plugin (config.PluginConfig.MenuPriority).
+	MenuPriority int
 }
 
 // MenuEntry describes one navigation menu item, built from the routes plugins have registered
@@ -70,6 +75,12 @@ type MenuEntry struct {
 	Icon     string
 	Path     string
 	Children []MenuEntry
+
+	// Priority is what the entry is ordered by (see HttpHandlerOptions.MenuPriority). The menu is already in order.
+	Priority int
+
+	// Separator is that this is not an entry but a rule between the entries above and below it. It has no label or path.
+	Separator bool
 }
 
 type RequestObjectFactoryFunc func() any
