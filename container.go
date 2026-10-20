@@ -150,6 +150,16 @@ type IPMAASContainer interface {
 	// previous call to RegisterEntity.
 	DeregisterEntity(id string) error
 
+	// RegisterEntityView gives the entity a view, which is how it looks on a page that lists entities of different plugins (see
+	// GetEntityViews). The entity must be one this plugin registered. Replaces an earlier view for it. It goes when the entity is
+	// deregistered.
+	RegisterEntityView(entityId string, view EntityViewFunc) error
+
+	// GetEntityViews makes the views of the entities, in the order asked, with what is known about each. An id that isn't an entity
+	// gives a result with an error. The views are made on the goroutines of the plugins that own the entities, one after another, so
+	// this must not be called from the goroutine of such a plugin; a page handler is fine.
+	GetEntityViews(entityIds []string) []EntityViewResult
+
 	// AssertEntityType Verifies that an entity with the given ID exists and is of the passed type
 	AssertEntityType(pmaasEntityId string, entityType reflect.Type) error
 
